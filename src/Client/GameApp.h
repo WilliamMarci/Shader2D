@@ -3,6 +3,7 @@
 #include <memory>
 #include "Platform/Window/Window.h"
 #include "Platform/OpenGL/Shader.h"
+#include "Engine/Renderer/OrthographicCamera.h"
 
 class GameApp {
   public:
@@ -21,4 +22,6 @@ class GameApp {
 
     std::unique_ptr<Shader> m_Shader;
     unsigned int m_VAO, m_VBO;
+
+    std::unique_ptr<OrthographicCamera> m_Camera;
 };

@@ -1,15 +1,14 @@
 #version 330 core
 
-// 输入：位置 (Location 0)
 layout (location = 0) in vec3 aPos;
-// 输入：颜色 (Location 1)
-layout (location = 1) in vec3 aColor;
+layout (location = 1) in vec4 aColor; 
 
-// 输出：传给片段着色器的颜色
-out vec3 ourColor;
+uniform mat4 u_ViewProjection;
+
+out vec4 ourColor; 
 
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
+    gl_Position = u_ViewProjection * vec4(aPos, 1.0);
     ourColor = aColor;
 }

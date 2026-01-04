@@ -162,4 +162,75 @@ Renderer::Submit(mesh, mat, transform);
 
 ---
 
-这份文档是你项目的**蓝图**。当你迷失方向或不知道下一步该做什么时，请随时查阅此文档，或直接问我具体的实现细节！祝开发顺利！
+## 后续更新
+
+### 渲染架构演进路线
+
+1. 当前：2D Batch Renderer + Shader Uniform Cache + 2D AABB Culling (CPU)。
+2. Next：场景管理 (Scene) 与 实体组件系统 (ECS) 初步集成。
+3. Future 3D：
+   * Camera -> Perspective (透视)。
+   * Culling -> Frustum Culling (视锥体 6 平面检测)。
+   * Optimization -> 空间划分 (Quadtree/BVH) 解决 O(N) 遍历问题。
+   * Pipeline -> 渲染排序 (Sorting) 与 材质批处理。
+
+# 引擎架构与愿景 (General Architecture & Vision)
+
+## 1. 核心定位 (Core Identity)
+我们的引擎旨在打造一个 **"高性能、高保真、风格化"** 的 2D/2.5D 游戏开发框架。它不追求大而全，但追求在特定领域的极致表现。
+
+*   **关键词**: C++17/20, OpenGL 4.5+, Data-Oriented, Stylized Rendering.
+
+## 2. 视觉技术路线 (Visual Tech Stack)
+
+### A. 混合渲染管线 (Hybrid Pipeline)
+虽然主要呈现 2D 内容，但底层基于 3D 空间构建。
+*   **Z-Depth**: 利用 Z 缓冲实现自动层级排序和视差滚动。
+*   **Post-Processing Stack**: 所有的渲染先输出到 FrameBuffer (FBO)，经由后处理链（Bloom, Tone Mapping, Chromatic Aberration, CRT Shader）后再上屏。
+
+### B. 三大定制风格 (Signature Styles)
+1.  **Neo-Pixel (现代像素)**:
+    *   结合 **Normal Maps** (法线贴图) 实现动态像素光照。
+    *   **Sub-pixel Jittering**: 消除像素移动时的抖动感。
+2.  **SDF Vector (矢量科幻)**:
+    *   使用 **Signed Distance Fields** 渲染无限分辨率的 UI 和特效。
+    *   实现“雷达扫描”、“能量护盾”等平滑边缘效果。
+3.  **Anime/Toon (二次元)**:
+    *   自定义 Shader 实现边缘光 (Rim Light) 和 色阶量化 (Cel Shading)。
+
+### C. 2D 光线追踪 (The "Holy Grail")
+这是引擎的终极画质目标，用于模拟真实的光影传播。
+*   **技术方案**: 2D SDF Global Illumination (GI) 或 Radiance Cascades。
+*   **核心步骤**:
+    1.  **JFA (Jump Flooding Algorithm)**: 实时生成场景的距离场纹理。
+    2.  **Ray Marching**: 在 Shader 中进行光线步进。
+    3.  **Temporal Accumulation**: 利用上一帧数据进行降噪，产生平滑的光照拖尾。
+
+## 3. 游戏类型支持 (Genre Support)
+
+为了支持目标游戏类型，引擎需具备以下模块：
+
+| 游戏类型 | 关键需求 | 引擎模块对应 |
+| :--- | :--- | :--- |
+| **视觉小说 (ADV)** | 复杂的文本排版、剧情脚本 | **Scripting System (Lua)**, **Rich Text Renderer** |
+| **2D RTS / RPG** | 海量单位、寻路、战争迷雾 | **ECS (实体组件系统)**, **Flow Field Pathfinding** |
+| **Noita-like** | 像素级物理模拟 | **Compute Shaders**, **Texture-based Physics** |
+| **3D 太空 RTS** | 空间管理、LOD | **Octree/BVH**, **Instanced Rendering** |
+
+## 4. 工程分层架构 (Layered Architecture)
+
+为了防止代码腐烂，严格遵守以下分层：
+
+1.  **Platform Layer (平台层)**: `Window`, `Input`, `FileSystem`. (屏蔽 OS 差异)
+2.  **Core Layer (核心层)**: `Renderer`, `Memory`, `Logger`. (引擎的心脏)
+3.  **Resource Layer (资源层)**: `TextureManager`, `ShaderLibrary`, `AssetPacker`. (资源生命周期)
+4.  **Scene Layer (场景层)**: `Scene`, `Entity`, `Component`, `System`. (ECS 逻辑)
+5.  **Editor Layer (工具层)**: `ImGui Layer`, `Gizmos`. (开发者工具)
+
+## 5. 资源与工具链 (Asset Pipeline)
+
+*   **导入器**: 集成 `Assimp` (模型), `stb_image` (图片), `miniaudio` (音频)。
+*   **虚拟文件系统 (VFS)**:
+    *   **Dev Mode**: 直接读取 `assets/` 文件夹。
+    *   **Release Mode**: 读取加密压缩的 `.pak` 包，防止资源被盗。
+*   **构建系统**: 能够将引擎核心与游戏脚本打包成单一可执行文件。

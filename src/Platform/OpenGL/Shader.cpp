@@ -75,23 +75,37 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
     return id;
 }
 
+int Shader::GetUniformLocation(const std::string& name) {
+    if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) { return m_UniformLocationCache[name]; }
+    int location = glGetUniformLocation(m_RendererID, name.c_str());
+    if (location == -1){
+        std::cout << "Warning: uniform '" << name << "' doesn't exist!" << std::endl;
+    }
+    m_UniformLocationCache[name] = location;
+    return location;
+}
 
-void Shader::UploadUniformInt(const std::string& name, int value) {
+void Shader::SetInt(const std::string& name, int value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform1i(location, value);
 }
 
-void Shader::UploadUniformFloat(const std::string& name, float value) {
+void Shader::SetFloat(const std::string& name, float value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform1f(location, value);
 }
 
-void Shader::UploadUniformFloat3(const std::string& name, const glm::vec3& value) {
+void Shader::SetFloat3(const std::string& name, const glm::vec3& value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform3f(location, value.x, value.y, value.z);
 }
 
-void Shader::UploadUniformMat4(const std::string& name, const glm::mat4& value) {
+void Shader::SetFloat4(const std::string& name, const glm::vec4& value) {
+    GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+    glUniform4f(location, value.x, value.y, value.z, value.w);
+}
+
+void Shader::SetMat4(const std::string& name, const glm::mat4& value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     // GL_FALSE 表示不需要转置矩阵 (GLM 默认列主序，OpenGL 也是列主序)
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));

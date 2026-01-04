@@ -1,119 +1,132 @@
-这份清单是根据我们之前的架构设计整理的**实战路线图**。你可以把它复制到你的笔记软件（如 Notion, Obsidian）中，每完成一项就打个钩。
+# 🗺️ 独立游戏引擎开发路线图 (Master Roadmap)
 
----
+这份清单涵盖了从零开始到实现一个具有 2D 光追、RTS 能力和伪联机架构引擎的完整路径。
 
-# 🛠️ 独立游戏引擎开发路线清单 (Roadmap)
+## ✅ 阶段一：基础设施 (Phase 1: Infrastructure)
+**状态：已完成**
+- [x] **项目搭建**: CMake, 目录结构, 第三方库 (GLFW, GLAD, GLM).
+- [x] **窗口系统**: `Window` 类封装, 事件轮询.
+- [x] **输入系统**: `Input` 类, 键盘/鼠标状态获取.
+- [x] **OpenGL 上下文**: GLAD 初始化, 错误回调.
 
-## 阶段一：基础设施与窗口 (Phase 1: Infrastructure)
+## 🚧 阶段二：渲染核心 (Phase 2: The Renderer)
+**目标：** 实现高效的 2D 批处理渲染，这是所有视觉输出的基础。
+**当前状态：进行中**
 
-**目标：** 搭建开发环境，跑通第一个黑窗口。
-**预估时间：** 3-5 天
+- [x] **Shader 系统**: 加载、编译、Uniform 缓存.
+- [x] **摄像机系统**: `OrthographicCamera`, Zoom (缩放), View-Projection 矩阵.
+- [x] **基础批处理**: `BatchRenderer` 架构, 巨大的 VBO, 基础 Quad 绘制.
+- [x] **CPU 剔除**: AABB 视锥剔除 (Culling).
+- [ ] **纹理支持 (Texture Support)**
+  - [ ] 集成 `stb_image`.
+  - [ ] 编写 `Texture2D` 类 (Create, Bind, Slot Management).
+  - [ ] 修改 `BatchRenderer` 支持多纹理槽位 (`sampler2D u_Textures[32]`).
+  - [ ] 实现 `DrawQuad` 的纹理重载版本.
+- [ ] **混合与旋转**: `glBlendFunc` (透明度) 和 Z 轴旋转支持.
 
-- [X] **项目搭建**
-  - [X] 建立目录结构 (`src`, `assets`, `vendor`, `CMakeLists.txt`)。
-  - [X] 编写根目录 `CMakeLists.txt`。
-  - [X] 下载并集成第三方库：`GLFW`, `GLAD`, `GLM`。
-- [X] **窗口系统 (Platform Layer)**
-  - [X] 创建 `Window` 类，封装 GLFW 初始化与销毁。
-  - [X] 实现 `Window::Update()` 处理事件轮询 (`glfwPollEvents`)。
-  - [X] 成功运行并弹出一个空白窗口。
-- [ ] **输入系统**
-  - [ ] 封装 `Input` 类。
-  - [ ] 实现 `Input::IsKeyPressed(KeyCode key)`。
-  - [ ] 实现 `Input::GetMousePosition()`。
-  - [ ] **测试：** 按下 ESC 键能关闭窗口。
+## 🎨 阶段三：材质与资源管理 (Phase 3: Material & Resources)
+**目标：** 建立统一的资源管线，为未来的“风格化渲染”做准备。我们需要像处理 3D 材质一样处理 2D 精灵。
 
-## 阶段二：核心渲染器 (Phase 2: The "Raylib" Layer)
+- [ ] **资源管理器 (Resource Manager)**
+  - [ ] 单例模式 `ResourceManager`.
+  - [ ] **缓存机制**: 避免重复加载同一个纹理/Shader (使用 `std::unordered_map`).
+  - [ ] **异步加载原型**: 预留接口，未来在独立线程加载大资源。
+- [ ] **高级材质系统 (Material System)**
+  - [ ] 创建 `Material` 基类: 持有 `Shader*` 和 `Uniform` 参数表.
+  - [ ] **多贴图支持**: 不仅支持 `Albedo` (颜色)，还要支持 `NormalMap` (法线), `Emission` (自发光).
+  - [ ] **材质实例 (Material Instance)**: 允许不同物体共用一个 Shader 但参数不同 (如颜色、粗糙度).
+- [ ] **Shader 库**: 内置常用 Shader (`Unlit`, `Standard2D`, `PixelArt`).
+  - [ ] 统一规范：标准 uniform/attribute 列表（MVP / Albedo / Normal / Roughness / UV）。
+  - [ ] Shader 文件示例与预设材质（便于快速调试）。
+  - [ ] Shader 热重载：检测文件变化并重新编译替换运行时 Shader。
+- [ ] **模型导入器 (Model Importer)**
+  - [ ] 集成 Assimp：引入并封装一个简单的导入接口，支持 .obj、.gltf 等常见格式。
+  - [ ] Mesh 类：解析顶点属性（Position, Normal, UV，可选 Tangent/Bitangent），生成并管理 VAO / VBO / IBO。
+  - [ ] SubMesh 支持：按材质分割索引缓冲，支持一个模型包含多个材质的情况。
+  - [ ] 材质与纹理映射：从 Assimp 材质读取纹理路径，交由 ResourceManager 加载 Texture2D（支持 Albedo/Normal/Emission）。
+  - [ ] API 设计：提供同步与异步加载接口，加载时返回占位网格/纹理以避免阻塞渲染线程。
+  - [ ] 测试用例：成功加载并渲染 Blender 导出的 Suzanne（.obj 或 .gltf），验证顶点法线、UV、子网格与材质正确显示；支持切换线框/填充模式。
+  - [ ] 错误与兼容性处理：日志提示缺失属性或纹理，自动回退（如无法读入法线则启用法线重计算或缺省法线）。
+  - [ ] 性能注意：支持静态网格合批（合并相同材质子网格）、延迟/分块上传大网格，留出异步加载扩展点。
 
-**目标：** 实现类似 Raylib 的简单绘图接口，画出图片。
-**预估时间：** 2 周
+## 阶段3.5 3D 风格化与混合渲染 (Phase 3.5: Stylized 3D)
+目标： 在 2D 世界中引入 3D 物体，并赋予其独特的艺术风格。
 
-- [ ] **OpenGL 基础封装**
-  - [ ] 集成 `GLAD`，初始化 OpenGL 上下文。
-  - [ ] 编写 `Shader` 类：读取文件、编译顶点/片段着色器、链接程序。
-  - [ ] 编写 `Texture` 类：集成 `stb_image`，加载图片到 GPU。
-- [ ] **批处理渲染器 (Batch Renderer) —— 🔥 核心难点**
-  - [ ] 定义顶点结构体 `Vertex` (Pos, Color, TexCoord, TexID)。
-  - [ ] 初始化渲染器：创建巨大的 VBO (顶点缓冲) 和 VAO。
-  - [ ] 实现 `Renderer::BeginScene(Camera)` 和 `EndScene()`。
-  - [ ] 实现 `Renderer::DrawQuad(pos, size, color)` (纯色)。
-  - [ ] 实现 `Renderer::DrawQuad(pos, size, texture)` (贴图)。
-  - [ ] 实现 `Flush()`：在 `EndScene` 或缓冲满时调用 `glDrawElements`。
-- [ ] **摄像机系统**
-  - [ ] 编写 `Camera` 类 (正交投影 Orthographic)。
-  - [ ] 计算 View-Projection 矩阵并传给 Shader。
-  - [ ] **测试：** 屏幕上画出 100 个方块，并能通过键盘移动摄像机查看它们。
+- [ ] 深度缓冲 (Depth Buffer)
+  - [ ] 启用 GL_DEPTH_TEST.
+  - [ ] 解决 2D 透明物体与 3D 不透明物体的混合排序问题.
+- [ ] 风格化 Shader (Stylized Shaders)
+  - [ ] Cel-Shading (卡通着色): 实现色阶量化 (Quantization) 和 边缘光 (Rim Light).
+  - [ ] Outline (描边): 基于法线扩充或后处理的描边算法.
+  - [ ] Dithering (抖动): 模拟复古 PS1 风格的半透明效果.
+- [ ] 混合渲染测试: 在 2D 背景图上渲染一个旋转的 3D 卡通角色.
 
-## 阶段三：材质与资源管理 (Phase 3: Engine Core)
 
-**目标：** 让资源加载更智能，支持自定义 Shader。
-**预估时间：** 1 周
+## 🛠️ 阶段四：开发者工具 (Phase 4: Tooling)
+**目标：** “工欲善其事，必先利其器”。在做复杂的 C/S 逻辑前，必须有可视化调试工具。
 
-- [ ] **资源管理器**
-  - [ ] 编写 `ResourceManager` (单例)。
-  - [ ] 实现纹理缓存：如果 "wall.png" 加载过，直接返回指针，不重复加载。
-  - [ ] 实现 Shader 库管理：`ShaderLibrary::Load("Core_PBR")`。
-- [ ] **材质系统**
-  - [ ] 编写 `Material` 类，持有 `Shader*` 和参数表。
-  - [ ] 实现 `Material::SetColor()`, `Material::SetTexture()`。
-  - [ ] 修改渲染器，使其支持提交带有不同 Material 的物体。
-- [ ] **Shader 预处理器 (可选)**
-  - [ ] 实现简单的字符串解析，支持 GLSL 中的 `#include` 语法。
+- [ ] **ImGui 集成**
+  - [ ] 初始化 ImGui (Docking 分支).
+  - [ ] 处理 ImGui 的输入阻断 (当鼠标在 UI 上时，游戏不响应).
+- [ ] **核心调试面板**
+  - [ ] **Stats Panel**: 实时监控 Draw Calls, FPS, 内存占用.
+  - [ ] **Renderer Config**: 实时开关线框模式、调整背景色.
+  - [ ] **Log Console**: 在游戏内显示控制台日志 (`spdlog` sink).
+- [ ] **场景层级 (Hierarchy)**: 列出当前所有实体，点击可查看详情.
 
-## 阶段四：C/S 架构分离 (Phase 4: Architecture Split)
-
-**目标：** 实现单人游戏的“伪联机”架构。
-**预估时间：** 2 周
+## 📡 阶段五：C/S 架构分离 (Phase 5: Architecture Split)
+**目标：** 实现单人游戏的“伪联机”架构。这是 RTS 和大规模计算的基石。
 
 - [ ] **通用数据层**
-  - [ ] 定义 `Packet` 结构体 (Type, Data)。
-  - [ ] 定义 `PacketType` 枚举 (PlayerMove, WorldState)。
+  - [ ] 定义 `Packet` 结构体 (Type, Data).
+  - [ ] 序列化/反序列化 (简单的二进制读写).
 - [ ] **通信层 (Loopback)**
-  - [ ] 编写线程安全的队列 `ThreadSafeQueue<Packet>`。
-  - [ ] 实现 `LoopbackDriver`：Client `Push` -> Server `Pop`。
-- [ ] **服务端 (Server)**
-  - [ ] 创建 `GameServer` 类。
-  - [ ] 编写服务端主循环 (Tick Loop)，固定 20 TPS。
-  - [ ] 在独立线程 (`std::thread`) 中启动 Server。
+  - [ ] 编写线程安全的队列 `ThreadSafeQueue<Packet>`.
+  - [ ] 实现 `LoopbackDriver`: 模拟网络延迟和丢包 (用于测试鲁棒性).
+- [ ] **服务端 (Server Thread)**
+  - [ ] 创建 `GameServer` 类，运行在独立 `std::thread`.
+  - [ ] **Tick Loop**: 固定频率 (如 60Hz) 更新逻辑，与渲染帧率解耦.
 - [ ] **客户端 (Client)**
-  - [ ] 重构 `main.cpp`，主线程只负责 Client 逻辑。
-  - [ ] 实现 `Client::SendInput()`：将键盘操作发给 Server。
-  - [ ] 实现 `Client::OnPacketReceived()`：接收 Server 的坐标更新。
-  - [ ] **测试：** Client 按 W，Server 收到并打印日志，Server 发回新坐标，Client 方块移动。
+  - [ ] **预测与插值**: 客户端先移动，服务器确认；如果不同步则回滚 (Reconciliation).
+  - [ ] **测试**: 两个窗口，一个主机一个客机，同步移动方块.
 
-## 阶段五：游戏性基础 (Phase 5: Gameplay Foundation)
+## 🧠 阶段六：游戏性与 AI (Phase 6: Gameplay Foundation)
+**目标：** 赋予对象智能。针对 RTS/RPG 的大规模单位设计。
 
-**目标：** 让方块动起来，有物理和 AI。
-**预估时间：** 持续进行
+- [ ] **ECS 初步 (或轻量级对象系统)**
+  - [ ] 既然是 RTS，建议引入 `entt` 库或手写简单的 Component System.
+  - [ ] 分离数据 (Position, Velocity) 与逻辑 (MovementSystem).
+- [ ] **AI 状态机 (State Machine)**
+  - [ ] **接口设计**: `IState` (Enter, Execute, Exit).
+  - [ ] **分层状态机 (HFSM)**: 支持状态嵌套 (如 "Combat" 状态下有 "Attack", "Dodge").
+  - [ ] **黑板 (Blackboard)**: AI 共享数据区 (如 "TargetLocation").
+- [ ] **寻路基础**: 集成 A* 算法或 Flow Field (流场寻路，适合 RTS 大量单位).
 
-- [ ] **物理系统**
-  - [ ] 编写 `AABB` 类 (Axis-Aligned Bounding Box)。
-  - [ ] 实现 `CheckCollision(AABB a, AABB b)`。
-  - [ ] 在 Server 端进行移动前的碰撞检测。
-- [ ] **AI 状态机**
-  - [ ] 定义 `State` 基类 (Enter, Update, Exit)。
-  - [ ] 编写 `StateMachine` 类。
-  - [ ] 实现简单的怪物行为：`PatrolState` (巡逻) -> `ChaseState` (追逐)。
-- [ ] **调试工具 (必做)**
-  - [ ] 集成 `Dear ImGui`。
-  - [ ] 制作一个调试面板，实时显示 FPS、实体数量、Server Tick 耗时。
+## 🔦 阶段七：2D 光线追踪与特效 (Phase 7: The "Holy Grail")
+**目标：** 实现引擎的核心视觉特色。
 
-## 阶段六：扩展与打磨 (Phase 6: Polish)
+- [ ] **帧缓冲架构 (FrameBuffers)**
+  - [ ] 渲染到纹理 (Render to Texture).
+  - [ ] 多重渲染目标 (MRT): 同时输出 颜色、法线、位置信息.
+- [ ] **2D SDF 光照 (Ray Tracing)**
+  - [ ] **JFA (Jump Flooding Algorithm)**: GPU 实时生成距离场纹理.
+  - [ ] **Ray Marching Shader**: 在 Shader 中步进光线，计算遮挡和软阴影.
+  - [ ] **GI (全局光照)**: 模拟光线反弹 (Radiance Cascades 原型).
+- [ ] **后处理栈 (Post-Processing)**
+  - [ ] **Bloom**: 提取高亮区域并模糊.
+  - [ ] **Tone Mapping**: HDR 转 LDR.
 
-**目标：** 增加声音和 UI，使其像一个完整的游戏。
-**预估时间：** 1 周
-
-- [ ] **音频系统**
-  - [ ] 集成 `miniaudio` 或 `SoLoud`。
-  - [ ] 实现 `Audio::Play("bgm.mp3")`。
-- [ ] **UI 系统**
-  - [ ] 使用你的 `BatchRenderer` 绘制 UI 层 (HUD)。
-  - [ ] 实现简单的文字渲染 (集成 `stb_truetype` 或使用 Bitmap Font)。
+## 📦 阶段八：打磨与发布 (Phase 8: Polish)
+- [ ] **音频系统**: 集成 `miniaudio`，支持 2D 空间音效.
+- [ ] **UI 系统**: 绘制 HUD，支持文字渲染 (`stb_truetype`).
+- [ ] **项目导出**: 简单的打包脚本，将资源和 exe 打包.
 
 ---
 
-### 💡 关键里程碑检查点
+### 🏆 学习曲线里程碑 (Milestones)
 
-1. **里程碑 A:** 屏幕上出现一个带纹理的方块。 (完成阶段二)
-2. **里程碑 B:** 两个窗口（或调试模式下），一个控制方块移动，另一个能看到同步移动（虽然现在是单机，但逻辑上通过了 Server）。 (完成阶段四)
-3. **里程碑 C:** 一个怪物在巡逻，玩家靠近后怪物开始追逐。 (完成阶段五)
+1.  **里程碑 A (The Artist):** 屏幕上显示一张贴图，并且能通过 ImGui 调节它的颜色和透明度。 *(完成阶段 2, 3, 4)*
+2.  **里程碑 B (The Architect):** 启动程序后，后台有一个 Server 线程在打印 "Tick"，前台 Client 按下 W 键，Server 收到包并返回新坐标，Client 平滑移动。 *(完成阶段 5)*
+3.  **里程碑 C (The Dimension Breaker)**: 在 2D 场景中加载并显示一个 Blender 导出的 3D 模型，并应用卡通渲染 Shader。 (完成阶段 3 & 3.5)
+4.  **里程碑 D (The Commander):** 屏幕上有 100 个单位，点击右键，它们自动寻路移动到目标点（RTS 雏形）。 *(完成阶段 6)*
+5.  **里程碑 E (The Visionary):** 放置一个点光源，墙壁投射出动态的软阴影，并且光线能照亮拐角（GI）动态软阴影照亮 3D 模型和 2D 精灵。 *(完成阶段 7)*
