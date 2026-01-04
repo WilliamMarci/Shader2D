@@ -1,3 +1,109 @@
+## 代码规范
+
+# MyIndieProject 代码规范 (Code Style Guide)
+
+## 1. 目录与文件结构
+
+* **原则**：物理结构（文件夹）应严格对应逻辑结构（命名空间）。
+* **头文件 (.h)**：必须包含 `#pragma once`。
+* **包含顺序**：
+  1. 对应的头文件 (如 `GameApp.cpp` 第一行是 `#include "GameApp.h"`)
+  2. 本项目其他模块 (`#include "Platform/..."`)
+  3. 第三方库 (`#include <glad/glad.h>`, `#include <glm/...>`)
+  4. 标准库 (`#include <iostream>`, `#include <vector>`)
+
+## 2. 命名约定 (Naming Convention)
+
+| 类型                      | 规则            | 示例                              | 说明                 |
+| :------------------------ | :-------------- | :-------------------------------- | :------------------- |
+| **类/结构体**       | PascalCase      | `GameApp`, `BatchRenderer`    | 大驼峰               |
+| **函数/方法**       | PascalCase      | `Update()`, `CompileShader()` | 大驼峰，动词开头     |
+| **变量 (局部)**     | camelCase       | `vertexSource`, `windowWidth` | 小驼峰               |
+| **变量 (成员)**     | m_PascalCase    | `m_RendererID`, `m_Window`    | `m_` 前缀 + 大驼峰 |
+| **变量 (静态成员)** | s_PascalCase    | `s_Instance`                    | `s_` 前缀          |
+| **常量/宏**         | SCREAMING_SNAKE | `MAX_SPRITES`, `PI`           | 全大写 + 下划线      |
+| **命名空间**        | PascalCase      | `MyEngine`, `Client`          | 避免缩写             |
+
+## 3. 现代 C++ 特性 (Modern C++ Usage)
+
+我们强制使用 **C++17** 标准。
+
+* **内存管理**：
+
+  * **严禁**在业务逻辑中使用裸指针 (`new`/`delete`)。
+  * **必须**使用智能指针：
+    * 独占资源用 `std::unique_ptr` (如 `m_Window`, `m_Shader`)。
+    * 共享资源用 `std::shared_ptr` (如未来的 `Texture`, `Material`)。
+  * *例外*：底层封装（如 `Window` 内部调用 GLFW）或观察者模式（传递 `Window*` 给 Input）可以使用裸指针，但不负责销毁。
+* **关键字**：
+
+  * 虚函数重写必须加 `override`。
+  * 不修改成员变量的函数必须加 `const` (如 `IsKeyPressed`, `GetWidth`)。
+  * 构造函数若只有一个参数，尽量加 `explicit` 防止隐式转换。
+
+## 4. 类设计规范 (Class Design)
+
+* **RAII (资源获取即初始化)**：
+
+  * 类的构造函数负责申请资源（如 `glGenBuffers`）。
+  * 类的析构函数负责释放资源（如 `glDeleteBuffers`）。
+  * 禁止出现资源泄漏。
+* **Pimpl (可选)**：对于依赖复杂的底层实现（如包含大量 OpenGL 头文件），尽量在 `.cpp` 中实现细节，保持 `.h` 干净。
+
+## 5. 渲染与数学
+
+* **数学库**：统一使用 **GLM**。
+  * 向量：`glm::vec2`, `glm::vec3`, `glm::vec4`
+  * 矩阵：`glm::mat4`
+* **OpenGL 调用**：
+  * 禁止在 `GameApp` 等高层逻辑中直接调用 `glDrawArrays` 等原生 API。
+  * 必须通过 `Renderer` 或 `Shader` 等封装类进行调用。
+
+## 6. 注释与文档
+
+* **头文件注释**：解释“这个类是干什么的”。
+* **方法注释**：如果逻辑复杂，解释“为什么这么做”，而不是“做了什么”（代码本身就是解释）。
+* **TODO**：使用 `// TODO: 说明` 标记待办事项。
+
+---
+
+### 示例代码片段
+
+```cpp
+// src/Platform/OpenGL/Texture.h
+
+#pragma once
+
+#include <string>
+#include <memory>
+
+// 命名空间（可选，视项目规模定）
+namespace MyEngine {
+
+    class Texture {
+    public:
+        // 构造函数：加载纹理
+        explicit Texture(const std::string& path);
+        ~Texture();
+
+        // 绑定到指定槽位
+        void Bind(unsigned int slot = 0) const;
+
+        // Getters
+        int GetWidth() const { return m_Width; }
+        int GetHeight() const { return m_Height; }
+
+    private:
+        unsigned int m_RendererID;
+        std::string m_FilePath;
+        int m_Width, m_Height, m_BPP; // BPP = Bytes Per Pixel
+    };
+
+}
+```
+
+记录好这份规范后，我们就可以在接下来的 `BatchRenderer` 开发中严格执行它，写出漂亮、健壮的代码了。
+
 MyIndieProject/
 ├── CMakeLists.txt                  # 顶层构建脚本
 ├── assets/                         # 【资源目录】
@@ -88,7 +194,6 @@ MyIndieGame/
 │       ├── Player.cpp
 │       └── World.cpp
 
-
 如果你采纳 Raylib，你的架构压力会瞬间减小 80%。你不再需要写 Engine/Render/Backend，也不用管 Engine/Platform
 
 太棒了！Linux 是开发底层系统和游戏引擎的绝佳环境（也是服务器部署的目标环境）。在 Linux 下开发 C++ 游戏引擎通常比 Windows 更顺滑，因为工具链（Toolchain）更统一。
@@ -104,32 +209,38 @@ MyIndieGame/
 打开终端，运行以下命令（以 Ubuntu/Debian 为例）：
 
 #### 1. 基础编译工具链
+
 ```bash
 sudo apt update
 sudo apt install build-essential gdb cmake git
 ```
-*   **build-essential:** 包含了 `gcc`, `g++`, `make` 等核心编译工具。
-*   **gdb:** 调试器。
-*   **cmake:** 构建系统。
+
+* **build-essential:** 包含了 `gcc`, `g++`, `make` 等核心编译工具。
+* **gdb:** 调试器。
+* **cmake:** 构建系统。
 
 #### 2. 图形库依赖 (GLFW 依赖)
+
 GLFW 在 Linux 上需要依赖 X11 或 Wayland 的开发库。
+
 ```bash
 sudo apt install libglfw3-dev
 ```
-*   **libglfw3-dev:** 这会直接安装 GLFW 的头文件和静态库。你甚至不需要自己下载源码编译它（虽然自己编译更灵活，但初期直接用 apt 安装最省事）。
 
-*   *如果后续编译报错缺库，可能还需要安装这些 X11 相关的库：*
-    ```bash
-    sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-    ```
+* **libglfw3-dev:** 这会直接安装 GLFW 的头文件和静态库。你甚至不需要自己下载源码编译它（虽然自己编译更灵活，但初期直接用 apt 安装最省事）。
+* *如果后续编译报错缺库，可能还需要安装这些 X11 相关的库：*
+
+  ```bash
+  sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+  ```
 
 #### 3. IDE / 编辑器
-*   **推荐：** **VS Code** (轻量，插件丰富)
-    *   安装插件：`C/C++` (Microsoft), `CMake Tools` (Microsoft)。
-*   **硬核推荐：** **CLion** (JetBrains)
-    *   收费（学生免费），但对 CMake 和 C++ 的支持是业界最强的。
-*   **极简推荐：** **Vim / Neovim** (如果你习惯终端操作)。
+
+* **推荐：** **VS Code** (轻量，插件丰富)
+  * 安装插件：`C/C++` (Microsoft), `CMake Tools` (Microsoft)。
+* **硬核推荐：** **CLion** (JetBrains)
+  * 收费（学生免费），但对 CMake 和 C++ 的支持是业界最强的。
+* **极简推荐：** **Vim / Neovim** (如果你习惯终端操作)。
 
 ---
 
@@ -137,16 +248,17 @@ sudo apt install libglfw3-dev
 
 和 Windows 一样，这些库建议以源码形式放在你的 `vendor/` 目录下，或者使用 Git Submodule。
 
-1.  **GLAD:** (必须手动生成)
-    *   去 [glad.dav1d.de](https://glad.dav1d.de/) 生成并下载 `glad.c` 和头文件。
-    *   放到 `vendor/glad/`。
+1. **GLAD:** (必须手动生成)
 
-2.  **GLM:** (Header-only)
-    *   `sudo apt install libglm-dev` (可以直接装系统里)
-    *   或者下载源码放到 `vendor/glm/` (推荐，保证版本可控)。
+   * 去 [glad.dav1d.de](https://glad.dav1d.de/) 生成并下载 `glad.c` 和头文件。
+   * 放到 `vendor/glad/`。
+2. **GLM:** (Header-only)
 
-3.  **stb_image:** (Header-only)
-    *   下载 `stb_image.h` 放到 `vendor/stb/`。
+   * `sudo apt install libglm-dev` (可以直接装系统里)
+   * 或者下载源码放到 `vendor/glm/` (推荐，保证版本可控)。
+3. **stb_image:** (Header-only)
+
+   * 下载 `stb_image.h` 放到 `vendor/stb/`。
 
 ---
 
@@ -195,29 +307,82 @@ target_link_libraries(Game
 
 除了之前提到的 OpenGL 和 C++，在 Linux 下开发你需要额外了解：
 
-1.  **Make / Ninja:**
-    *   CMake 生成的是 `Makefile`。你需要知道在终端敲 `make` 来编译。
-    *   或者用 `ninja` (速度更快)：`sudo apt install ninja-build`，然后 `cmake -G Ninja ..`。
+1. **Make / Ninja:**
 
-2.  **调试 (GDB / VS Code):**
-    *   在 Linux 下没有 Visual Studio 那种傻瓜式调试器。
-    *   你需要学会配置 VS Code 的 `.vscode/launch.json` 来启动 GDB 调试你的程序。
+   * CMake 生成的是 `Makefile`。你需要知道在终端敲 `make` 来编译。
+   * 或者用 `ninja` (速度更快)：`sudo apt install ninja-build`，然后 `cmake -G Ninja ..`。
+2. **调试 (GDB / VS Code):**
 
-3.  **显卡驱动:**
-    *   确认你的 Linux 显卡驱动装好了。运行 `glxinfo | grep "OpenGL version"` 看看是不是显示了正确的版本（比如 4.6），而不是 Mesa 软件渲染。
+   * 在 Linux 下没有 Visual Studio 那种傻瓜式调试器。
+   * 你需要学会配置 VS Code 的 `.vscode/launch.json` 来启动 GDB 调试你的程序。
+3. **显卡驱动:**
+
+   * 确认你的 Linux 显卡驱动装好了。运行 `glxinfo | grep "OpenGL version"` 看看是不是显示了正确的版本（比如 4.6），而不是 Mesa 软件渲染。
 
 ### 🚀 你的第一步 (Linux 版)
 
-1.  打开终端，安装 `build-essential`, `cmake`, `libglfw3-dev`。
-2.  创建一个文件夹 `MyGame`。
-3.  创建一个 `main.cpp`，写一个简单的 Hello World。
-4.  创建一个 `CMakeLists.txt`。
-5.  运行：
-    ```bash
-    mkdir build
-    cd build
-    cmake ..
-    make
-    ./MyGame
-    ```
-6.  如果打印出 Hello World，环境就通了！接下来引入 GLFW 画窗口。
+1. 打开终端，安装 `build-essential`, `cmake`, `libglfw3-dev`。
+2. 创建一个文件夹 `MyGame`。
+3. 创建一个 `main.cpp`，写一个简单的 Hello World。
+4. 创建一个 `CMakeLists.txt`。
+5. 运行：
+   ```bash
+   mkdir build
+   cd build
+   cmake ..
+   make
+   ./MyGame
+   ```
+6. 如果打印出 Hello World，环境就通了！接下来引入 GLFW 画窗口。
+
+
+![1767510968972](image/mem/1767510968972.png)
+
+这张图展示了从你的 C++ 代码到屏幕显示的完整流程。请注意**绿色**的部分是你可以写代码控制的（Shader），**灰色**的部分是显卡硬件自动完成的。
+
+**总结：**
+你写的 GLSL -> 传给 OpenGL API -> 显卡驱动接收 -> **驱动内置编译器编译** -> GPU 机器码 -> 在显卡上运行
+
+GLSL (OpenGL Shading Language) 的语法 **非常像 C 语言** ，但它是专门为数学计算和图形处理“魔改”过的。
+
+**核心特点：**
+
+1. **强类型：** 必须声明类型，不能随便混用（比如 `int` 不能直接赋值给 `float`，必须强转）。
+2. **内置数学类型：** 这是它最强大的地方。它原生支持向量和矩阵运算。
+   * `vec2`, `vec3`, `vec4`: 2/3/4维向量（比如坐标、颜色）。
+   * `mat2`, `mat3`, `mat4`: 2x2, 3x3, 4x4 矩阵。
+3. **并行思维：** 没有 `printf`，没有 `cin`。你的代码是同时在几千个核心上跑的。
+
+```glsl
+// --- 变量定义 ---
+int  i = 10;
+float f = 3.14;
+bool b = true;
+
+// --- 向量 (Vector) ---
+vec3 pos = vec3(1.0, 2.0, 3.0);
+vec3 color = vec3(1.0, 0.0, 0.0); // 红色
+
+// 向量极其灵活的访问方式 (Swizzling)
+float x = pos.x;      // 取第1个分量
+vec2 xy = pos.xy;     // 取前2个分量，变成一个 vec2
+vec3 c = color.bgr;   // 甚至可以乱序取！变成 (0, 0, 1) 蓝色
+
+// --- 矩阵 (Matrix) ---
+mat4 projection; // 4x4 投影矩阵
+
+// --- 输入输出修饰符 ---
+in  vec3 vPos;   // 输入：从上一阶段传进来的
+out vec4 fColor; // 输出：传给下一阶段的
+uniform float uTime; // 全局变量：CPU 传进来的，对所有像素都一样
+
+// --- 函数 ---
+// 有 main 函数作为入口
+void main() {
+    // 内置数学函数极多
+    float d = distance(pos, vec3(0.0)); // 计算距离
+    float s = sin(uTime);               // 正弦
+    vec3 n = normalize(pos);            // 归一化
+}
+
+```

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320" viewBox="0 0 760 320" role="img" aria-label="Summary diagram: objects and class functions">
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L10,4 L0,8 z" fill="#333"></path>
+        </marker>
+        <style type="text/css"><![CDATA[
+            .subbox { fill: none; stroke: #666; stroke-width: 1.5px; rx:8; ry:8; }
+            .sublabel { font: 14px sans-serif; fill: #222; }
+            .node { stroke: #333; stroke-width: 1.5px; rx:6; ry:6; font: 13px sans-serif; fill: #fff; }
+            .member { fill: #bbbbff; }
+            .staticf { fill: #ff99ff; }
+            .obj { fill: #fffbe6; }
+            .user { fill: #e6fff2; }
+            .arrow-label { font: 12px sans-serif; fill: #222; background: #fff; }
+        ]]></style>
+    </defs>
+
+    <!-- Subgraph boxes -->
+    <rect class="subbox" x="20"  y="12"  width="320" height="160"></rect>
+    <text class="sublabel" x="30" y="28">实例化世界 (Objects)</text>
+
+    <rect class="subbox" x="400" y="12"  width="340" height="160"></rect>
+    <text class="sublabel" x="410" y="28">类定义世界 (Class)</text>
+
+    <!-- Nodes: Objects -->
+    <!-- Obj1 -->
+    <g id="obj1">
+        <rect class="node obj" x="60" y="50" width="160" height="36"></rect>
+        <text x="140" y="74" text-anchor="middle" alignment-baseline="middle" font-family="sans-serif" font-size="13">对象 A (myCar)</text>
+    </g>
+
+    <!-- Obj2 -->
+    <g id="obj2">
+        <rect class="node obj" x="60" y="110" width="160" height="36"></rect>
+        <text x="140" y="134" text-anchor="middle" alignment-baseline="middle" font-family="sans-serif" font-size="13">对象 B (yourCar)</text>
+    </g>
+
+    <!-- Nodes: Class side -->
+    <!-- StaticFunc -->
+    <g id="static">
+        <rect class="node staticf" x="480" y="40" width="220" height="36"></rect>
+        <text x="590" y="64" text-anchor="middle" alignment-baseline="middle" font-family="sans-serif" font-size="13">静态函数 (static IsKeyPressed)</text>
+    </g>
+
+    <!-- MemberFunc -->
+    <g id="member">
+        <rect class="node member" x="480" y="100" width="220" height="36"></rect>
+        <text x="590" y="124" text-anchor="middle" alignment-baseline="middle" font-family="sans-serif" font-size="13">普通函数 (SetSpeed)</text>
+    </g>
+
+    <!-- User node -->
+    <g id="user">
+        <rect class="node user" x="300" y="200" width="160" height="36"></rect>
+        <text x="380" y="224" text-anchor="middle" alignment-baseline="middle" font-family="sans-serif" font-size="13">用户代码</text>
+    </g>
+
+    <!-- Arrows -->
+    <!-- Obj1 -> MemberFunc -->
+    <line x1="220" y1="68" x2="480" y2="118" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+    <text class="arrow-label" x="350" y="86" text-anchor="middle">调用 (传入 this=Obj1)</text>
+
+    <!-- Obj2 -> MemberFunc -->
+    <line x1="220" y1="126" x2="480" y2="118" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+    <text class="arrow-label" x="350" y="138" text-anchor="middle">调用 (传入 this=Obj2)</text>
+
+    <!-- User -> StaticFunc -->
+    <line x1="360" y1="200" x2="480" y2="58" stroke="#333" stroke-width="2" marker-end="url(#arrow)" />
+    <text class="arrow-label" x="420" y="150" text-anchor="middle">直接调用 (无 this)</text>
+
+    <!-- Legend colored node outlines (optional small markers) -->
+    <rect x="20" y="190" width="12" height="12" fill="#bbbbff" stroke="#333" />
+    <text x="40" y="200" font-family="sans-serif" font-size="12">普通函数 (依赖对象)</text>
+    <rect x="20" y="210" width="12" height="12" fill="#ff99ff" stroke="#333" />
+    <text x="40" y="222" font-family="sans-serif" font-size="12">静态函数 (类级别)</text>
+
+</svg>
