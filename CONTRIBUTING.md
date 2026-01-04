@@ -71,3 +71,28 @@ We enforce the **C++17** standard.
     * `reinterpret_cast`: for low-level bit operations (e.g., long to void*, OpenGL offset handling).
     * `const_cast`: avoid; only for interfacing with legacy libraries.
     * `dynamic_cast`: avoid when possible (performance overhead); use only in tooling layers.
+
+## 8. Data Types and Primitives
+
+To ensure cross-platform compatibility and correct memory layout for GPU data, strict type conventions are enforced.
+
+* **Integers**:
+    * Use `<cstdint>` fixed-width types for class members, serialization, and GPU data.
+        * `uint8_t`: Bytes, colors (0-255).
+        * `uint16_t`: Large indices (if > 256 and < 65536).
+        * `uint32_t`: General IDs, handles, counts, sizes in headers.
+        * `int32_t`: Signed integers requiring fixed width.
+    * Use `int` only for trivial local loops or return codes where size is irrelevant.
+    * Use `size_t` for memory sizes, array indexing, and loop counters iterating over containers.
+
+* **Floating Point**:
+    * Use `float` for all rendering math, physics, and transforms.
+    * Avoid `double` unless high-precision scientific calculation is required (rare in rendering).
+
+* **OpenGL Types**:
+    * In **Platform/OpenGL** files: Use `GLenum`, `GLuint`, `GLint` to match GLAD signatures.
+    * In **Engine/Renderer** (Abstraction) files: Use `uint32_t` instead of `GLuint` to maintain API independence.
+
+* **Strings**:
+    * Use `std::string` for general text.
+    * Use `const char*` only for static string literals or interfacing with C-APIs (like ImGui or OpenGL).

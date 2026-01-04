@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "OpenGLShader.h"
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
+OpenGLShader::OpenGLShader(const std::string& vertexPath, const std::string& fragmentPath) {
     std::string vertexSource = ReadFile(vertexPath);
     std::string fragmentSource = ReadFile(fragmentPath);
 
@@ -33,13 +33,13 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
     glDeleteShader(fs);
 }
 
-Shader::~Shader() { glDeleteProgram(m_RendererID); }
+OpenGLShader::~OpenGLShader() { glDeleteProgram(m_RendererID); }
 
-void Shader::Bind() const { glUseProgram(m_RendererID); }
+void OpenGLShader::Bind() const { glUseProgram(m_RendererID); }
 
-void Shader::Unbind() const { glUseProgram(0); }
+void OpenGLShader::Unbind() const { glUseProgram(0); }
 
-std::string Shader::ReadFile(const std::string& filepath) {
+std::string OpenGLShader::ReadFile(const std::string& filepath) {
     // binary reading
     std::ifstream in(filepath, std::ios::in | std::ios::binary);
     if (in) {
@@ -52,7 +52,7 @@ std::string Shader::ReadFile(const std::string& filepath) {
     return "";
 }
 
-unsigned int Shader::CompileShader(unsigned int type, const std::string& source) {
+unsigned int OpenGLShader::CompileShader(unsigned int type, const std::string& source) {
     unsigned int id = glCreateShader(type);
     const char* src = source.c_str();
     glShaderSource(id, 1, &src, nullptr);
@@ -75,7 +75,7 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
     return id;
 }
 
-int Shader::GetUniformLocation(const std::string& name) {
+int OpenGLShader::GetUniformLocation(const std::string& name) {
     if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) { return m_UniformLocationCache[name]; }
     int location = glGetUniformLocation(m_RendererID, name.c_str());
     if (location == -1){
@@ -85,27 +85,32 @@ int Shader::GetUniformLocation(const std::string& name) {
     return location;
 }
 
-void Shader::SetInt(const std::string& name, int value) {
+void OpenGLShader::SetInt(const std::string& name, int value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform1i(location, value);
 }
 
-void Shader::SetFloat(const std::string& name, float value) {
+void OpenGLShader::SetIntArray(const std::string& name, int* values, uint32_t count) {
+    GLint location = glGetUniformLocation(m_RendererID,  name.c_str());
+    glUniform1iv(location, count, values);
+}
+
+void OpenGLShader::SetFloat(const std::string& name, float value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform1f(location, value);
 }
 
-void Shader::SetFloat3(const std::string& name, const glm::vec3& value) {
+void OpenGLShader::SetFloat3(const std::string& name, const glm::vec3& value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform3f(location, value.x, value.y, value.z);
 }
 
-void Shader::SetFloat4(const std::string& name, const glm::vec4& value) {
+void OpenGLShader::SetFloat4(const std::string& name, const glm::vec4& value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     glUniform4f(location, value.x, value.y, value.z, value.w);
 }
 
-void Shader::SetMat4(const std::string& name, const glm::mat4& value) {
+void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     // GL_FALSE 表示不需要转置矩阵 (GLM 默认列主序，OpenGL 也是列主序)
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));

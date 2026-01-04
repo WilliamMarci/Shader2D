@@ -1,27 +1,40 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+
+// 引入 Engine 核心组件
 #include "Platform/Window/Window.h"
-#include "Platform/OpenGL/Shader.h"
+#include "Engine/Renderer/Shader.h"
+#include "Engine/Renderer/Texture.h"
 #include "Engine/Renderer/OrthographicCamera.h"
 
 class GameApp {
-  public:
+public:
     GameApp();
     ~GameApp();
 
-    void Run();
+    void Run(); 
 
-  private:
-    void Update();
-    void Render();
+private:
+    void Init(); 
+    void OnUpdate(float ts); // (ts = timestep/deltaTime) logic update
+    void OnRender(); // rendering update
 
-  private:
-    std::unique_ptr<Window> m_Window;
+private:
     bool m_Running = true;
+    std::unique_ptr<Window> m_Window;
 
-    std::unique_ptr<Shader> m_Shader;
-    unsigned int m_VAO, m_VBO;
+    std::shared_ptr<Shader> m_Shader;
+    std::shared_ptr<Texture2D> m_Texture; 
 
-    std::unique_ptr<OrthographicCamera> m_Camera;
+
+    std::shared_ptr<OrthographicCamera> m_Camera;
+
+    glm::vec3 m_CameraPosition = {0.0f, 0.0f, 0.0f};
+    float m_CameraRotation = 0.0f;
+    float m_CameraZoom = 1.0f;
+    float m_CameraSpeed = 2.0f;
+
+    float m_LastFrameTime = 0.0f;
 };

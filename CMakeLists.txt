@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16) # PCH 需要 CMake 3.16+
 project(Shader2D)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -6,23 +6,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-
-# dependency paths
 find_package(glfw3 3.3 REQUIRED)
+
 add_library(glad vendor/glad/src/glad.c)
 target_include_directories(glad PUBLIC vendor/glad/include)
-include_directories(vendor/glm)
 
+add_library(stb_image vendor/stb_image/stb_image.cpp)
+target_include_directories(stb_image PUBLIC vendor/stb_image)
+
+add_library(glm INTERFACE)
+target_include_directories(glm INTERFACE vendor/glm)
 
 include_directories(src)
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 add_executable(MyGameClient ${SOURCES})
 
+target_precompile_headers(MyGameClient PRIVATE src/pch.h)
+
 target_link_libraries(MyGameClient
     PRIVATE
     glad        # the glad library we defined earlier
     glfw        # glfw found by the system
+    stb_image   # image loading library
+    glm         # glm math library
     GL          # Linux graphics driver (libGL)
     dl          # dynamic loader (required by glad)
     pthread     # threading library (needed for client/server architecture in the future)

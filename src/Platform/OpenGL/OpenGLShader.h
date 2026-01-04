@@ -1,18 +1,20 @@
 #pragma once
 
+#include "Engine/Renderer/Shader.h"
 #include <glm/glm.hpp>
 #include <string>
 #include <unordered_map>
 
-class Shader {
+class OpenGLShader : public Shader {
   public:
-    Shader(const std::string& vertexPath, const std::string& fragmentPath);
-    ~Shader();
+    OpenGLShader(const std::string& vertexPath, const std::string& fragmentPath);
+    ~OpenGLShader();
 
     void Bind() const;
     void Unbind() const;
 
     void SetInt(const std::string& name, int value);
+    void SetIntArray(const std::string& name, int* values, uint32_t count);
     void SetFloat(const std::string& name, float value);
     void SetFloat3(const std::string& name, const glm::vec3& value);
     void SetFloat4(const std::string& name, const glm::vec4& value);
