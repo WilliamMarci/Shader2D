@@ -37,7 +37,6 @@ void GameApp::Init() {
     );
 
     // 如果你有纹理，也可以在这里加载
-    std::shared_ptr<Texture2D> m_Texture;
     m_Texture = Texture2D::Create("assets/game/icons/shader.png");
 
     // 绑定 Shader 并设置纹理槽位 (假设 Shader 里有个 u_Textures 数组)
@@ -117,8 +116,7 @@ void GameApp::OnRender() {
     }
 
     // Draw 带纹理的四边形 (如果你加载了纹理)
-    m_Texture->Bind();
-    Renderer2D::DrawQuad({1.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f});
+    Renderer2D::DrawQuad({1.0f, 0.0f}, {1.0f, 1.0f}, m_Texture, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
     // m_Texture->Bind(0); // 解绑纹理
 
     // 3. 结束场景 (提交 GPU)

@@ -26,6 +26,7 @@
 
 特例： 对于大写缩写（如 `VAO` 或 `JSON`），在类名中保持大写（`JSONParser`），在变量名中视为单词处理（`jsonParser`）。
 变量 (Public Struct 成员) | PascalCase | Position, Color | 仅限 POD 结构体
+
 ## 3. 现代 C++ 特性 (Modern C++ Usage)
 
 我们强制使用 **C++17** 标准。
@@ -71,10 +72,11 @@
 
 * 严禁使用 C 风格转换 (type)value。
 * 必须根据意图使用 C++ 转换：
-    * static_cast: 用于良性转换（如 float 转 int，子类转父类）。
-    * reinterpret_cast: 用于低级位操作（如 long 转 void*，OpenGL offset 处理）。
-    * const_cast: 尽量避免，除非对接遗留库。
-    * dynamic_cast: 尽量避免（性能开销大），仅在工具层使用。
+  * static_cast: 用于良性转换（如 float 转 int，子类转父类）。
+  * reinterpret_cast: 用于低级位操作（如 long 转 void*，OpenGL offset 处理）。
+  * const_cast: 尽量避免，除非对接遗留库。
+  * dynamic_cast: 尽量避免（性能开销大），仅在工具层使用。
+
 ---
 
 ### 示例代码片段
@@ -345,7 +347,6 @@ target_link_libraries(Game
    ```
 6. 如果打印出 Hello World，环境就通了！接下来引入 GLFW 画窗口。
 
-
 ![1767510968972](image/mem/1767510968972.png)
 
 这张图展示了从你的 C++ 代码到屏幕显示的完整流程。请注意**绿色**的部分是你可以写代码控制的（Shader），**灰色**的部分是显卡硬件自动完成的。
@@ -408,9 +409,11 @@ void main() {
 做了批处理，画 10,000 个精灵只需要 1 次 DrawCall，FPS 依然跑满 60+。
 
 ### 核心思想：公交车理论
+
 我们需要构建一个**缓冲区 (Buffer)**，像公交车一样。
-1.  **上车 (`DrawQuad`)**：当游戏逻辑想画一个图时，不要立刻画，而是把它的坐标、颜色塞进这个缓冲区。
-2.  **发车 (`Flush`)**：当缓冲区满了，或者这一帧结束了，把整车数据一次性发给 GPU 绘制。
+
+1. **上车 (`DrawQuad`)**：当游戏逻辑想画一个图时，不要立刻画，而是把它的坐标、颜色塞进这个缓冲区。
+2. **发车 (`Flush`)**：当缓冲区满了，或者这一帧结束了，把整车数据一次性发给 GPU 绘制。
 
 ---
 
@@ -446,18 +449,18 @@ class BatchRenderer {
 public:
     // 初始化渲染器 (创建 VAO/VBO，分配内存)
     static void Init();
-    
+  
     // 关闭渲染器 (清理资源)
     static void Shutdown();
 
     // --- 绘制命令 ---
-    
+  
     // 开始新的一批绘制 (重置指针)
     static void BeginBatch();
-    
+  
     // 结束当前批次 (将数据上传 GPU 并绘制)
     static void EndBatch();
-    
+  
     // 提交一个矩形到队列中
     static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
 
@@ -499,7 +502,7 @@ struct RendererData {
     // CPU 端的顶点缓冲区
     // 使用 unique_ptr 自动管理内存生命周期 (RAII)
     std::unique_ptr<Vertex[]> QuadBufferBase;
-    
+  
     // 游标指针：用于快速写入数据。它是“观察者”，不拥有内存，所以用裸指针。
     Vertex* QuadBufferPtr = nullptr;
 
@@ -528,7 +531,7 @@ void BatchRenderer::Init() {
     // 属性 0: Position (vec3)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, Position));
-    
+  
     // 属性 1: Color (vec4)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, Color));
@@ -553,7 +556,7 @@ void BatchRenderer::Init() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_Data.EBO);
     // 上传数据
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_INDICES * sizeof(uint32_t), indices.get(), GL_STATIC_DRAW);
-    
+  
     // indices 在这里出作用域，自动释放内存
 }
 
@@ -574,17 +577,17 @@ void BatchRenderer::BeginBatch() {
 void BatchRenderer::EndBatch() {
     // 计算填了多少数据 (指针相减)
     GLsizeiptr size = (uint8_t*)s_Data.QuadBufferPtr - (uint8_t*)s_Data.QuadBufferBase.get();
-    
+  
     // 如果有数据，就上传并绘制
     if (size > 0) {
         glBindBuffer(GL_ARRAY_BUFFER, s_Data.VBO);
-        
+      
         // === 核心优化：glMapBuffer ===
         // 直接获取显存映射指针，进行内存拷贝
         void* ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
         memcpy(ptr, s_Data.QuadBufferBase.get(), size);
         glUnmapBuffer(GL_ARRAY_BUFFER);
-        
+      
         Flush();
     }
 }
@@ -593,7 +596,7 @@ void BatchRenderer::Flush() {
     glBindVertexArray(s_Data.VAO);
     // 绘制！
     glDrawElements(GL_TRIANGLES, s_Data.IndexCount, GL_UNSIGNED_INT, nullptr);
-    
+  
     s_Data.Stats.DrawCalls++;
 }
 
@@ -606,7 +609,7 @@ void BatchRenderer::DrawQuad(const glm::vec2& position, const glm::vec2& size, c
 
     // 写入 4 个顶点的数据
     // 这里的 QuadBufferPtr 操作非常快，因为它是裸指针操作
-    
+  
     // Vertex 1 (左下)
     s_Data.QuadBufferPtr->Position = { position.x, position.y, 0.0f };
     s_Data.QuadBufferPtr->Color = color;
@@ -642,6 +645,7 @@ void BatchRenderer::ResetStats() { memset(&s_Data.Stats, 0, sizeof(RendererStats
 我们的顶点数据结构变了（加了 Color 属性），而且我们现在画的是矩形（由两个三角形组成）。
 
 **assets/engine/shaders/core_default.vert**
+
 ```glsl
 #version 330 core
 
@@ -658,6 +662,7 @@ void main()
 ```
 
 **assets/engine/shaders/core_default.frag**
+
 ```glsl
 #version 330 core
 
@@ -715,7 +720,7 @@ void GameApp::Update() {
     if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
         m_Running = false;
     }
-    
+  
     // 每帧重置统计
     BatchRenderer::ResetStats();
 }
@@ -731,7 +736,7 @@ void GameApp::Render() {
 
     // 画一个红色的正方形
     BatchRenderer::DrawQuad({-0.5f, -0.5f}, {0.5f, 0.5f}, {1.0f, 0.0f, 0.0f, 1.0f});
-    
+  
     // 画一个绿色的小矩形
     BatchRenderer::DrawQuad({0.2f, 0.2f}, {0.2f, 0.3f}, {0.0f, 1.0f, 0.0f, 1.0f});
 
@@ -743,7 +748,7 @@ void GameApp::Render() {
     }
 
     BatchRenderer::EndBatch();
-    
+  
     // 可选：打印统计信息 (每 60 帧打印一次，防止刷屏)
     // std::cout << "Draw Calls: " << BatchRenderer::GetStats().DrawCalls << std::endl;
 }
@@ -751,106 +756,153 @@ void GameApp::Render() {
 
 ### 5. 编译与测试
 
-1.  保存所有文件。
-2.  编译：
-    ```bash
-    cd build
-    cmake ..
-    make
-    ```
-3.  运行：
-    ```bash
-    ../build/bin/MyGameClient
-    ```
+1. 保存所有文件。
+2. 编译：
+   ```bash
+   cd build
+   cmake ..
+   make
+   ```
+3. 运行：
+   ```bash
+   ../build/bin/MyGameClient
+   ```
 
 ### 预期结果
+
 你应该看到：
-1.  屏幕中间有一个**红色大正方形**。
-2.  右上角有一个**绿色长方形**。
-3.  顶部有一大片密密麻麻的**蓝色小方块矩阵**。
+
+1. 屏幕中间有一个**红色大正方形**。
+2. 右上角有一个**绿色长方形**。
+3. 顶部有一大片密密麻麻的**蓝色小方块矩阵**。
 
 如果看到了这个画面，恭喜你！你已经拥有了一个**符合现代 C++ 规范、高性能、内存安全**的 2D 渲染核心。
 
 接下来，我们要给这个引擎加上**摄像机 (Camera)**，这样我们才能在无限大的世界里移动。准备好了吗？
 
-
 ### 1. AABB 是目前最平衡的办法吗？
 
 **是的，对于 2D 渲染器（以及绝大多数 3D 渲染的粗剔除阶段），AABB 是性价比之王。**
 
-*   **计算极快**：只需要比较 `min` 和 `max` 的 x, y (z) 分量。没有平方根，没有三角函数。
-*   **内存紧凑**：只需存储两个 `vec3` (min, max)。
-*   **适应性强**：绝大多数游戏物体（UI、Sprite、Tilemap）本质上都是矩形。
-*   **缺点**：对于旋转的物体（OBB），AABB 会变得比物体实际体积大（包围盒变大），导致一些明明看不见的物体被误判为“可见”而送入 GPU。
-    *   **对策**：这点“误杀”带来的 GPU 额外开销，通常远小于你在 CPU 上做复杂 OBB（有向包围盒）计算的开销。**宁可多画一点，不要算得太慢。**
+* **计算极快**：只需要比较 `min` 和 `max` 的 x, y (z) 分量。没有平方根，没有三角函数。
+* **内存紧凑**：只需存储两个 `vec3` (min, max)。
+* **适应性强**：绝大多数游戏物体（UI、Sprite、Tilemap）本质上都是矩形。
+* **缺点**：对于旋转的物体（OBB），AABB 会变得比物体实际体积大（包围盒变大），导致一些明明看不见的物体被误判为“可见”而送入 GPU。
+  * **对策**：这点“误杀”带来的 GPU 额外开销，通常远小于你在 CPU 上做复杂 OBB（有向包围盒）计算的开销。**宁可多画一点，不要算得太慢。**
 
 ### 2. 未来拓展到 3D 相机（可变焦距等）需要做什么？
 
 如果未来我们要支持 3D 透视相机（Perspective Camera），剔除逻辑会有本质变化：
 
 #### A. 视锥体剔除 (Frustum Culling)
+
 在 2D 正交投影下，视野是个矩形（AABB）。但在 3D 透视投影下，视野是一个**平截头体 (Frustum)**（像一个被切顶的金字塔）。
 
-*   **变化点**：
-    *   不能简单比较 x, y 坐标了。
-    *   需要提取视锥体的 **6 个平面** (Near, Far, Left, Right, Top, Bottom)。
-    *   **算法**：判断一个物体的 AABB 是否在这 6 个平面的“内侧”。
-    *   **代码影响**：`BatchRenderer::BeginScene` 里计算 `s_Data.CameraMin/Max` 的逻辑会被替换为 `s_Data.FrustumPlanes[6]` 的计算。
+* **变化点**：
+  * 不能简单比较 x, y 坐标了。
+  * 需要提取视锥体的 **6 个平面** (Near, Far, Left, Right, Top, Bottom)。
+  * **算法**：判断一个物体的 AABB 是否在这 6 个平面的“内侧”。
+  * **代码影响**：`BatchRenderer::BeginScene` 里计算 `s_Data.CameraMin/Max` 的逻辑会被替换为 `s_Data.FrustumPlanes[6]` 的计算。
 
 #### B. 空间划分 (Spatial Partitioning)
+
 当场景里有 10000 个物体时，哪怕用 AABB 剔除，每帧循环 10000 次也是很慢的（O(N) 复杂度）。
 
-*   **未来升级**：
-    *   **BVH (Bounding Volume Hierarchy)**：把物体分层级包起来。如果摄像机看不见“大包围盒”，那里面的 1000 个小物体直接跳过，不用逐个检查。
-    *   **Octree (八叉树)** / **Quadtree (四叉树)**：按空间区域划分物体。
-    *   **代码影响**：你需要引入一个 `Scene` 或 `World` 类来管理所有实体，而不是直接在 `Render` 函数里写 `for` 循环。
+* **未来升级**：
+  * **BVH (Bounding Volume Hierarchy)**：把物体分层级包起来。如果摄像机看不见“大包围盒”，那里面的 1000 个小物体直接跳过，不用逐个检查。
+  * **Octree (八叉树)** / **Quadtree (四叉树)**：按空间区域划分物体。
+  * **代码影响**：你需要引入一个 `Scene` 或 `World` 类来管理所有实体，而不是直接在 `Render` 函数里写 `for` 循环。
 
 #### C. 遮挡剔除 (Occlusion Culling)
+
 在 3D 中，前面的一堵墙挡住了后面的一座山。视锥体剔除会认为山还在视野范围内（只是被挡住了），所以还是会画山。
 
-*   **未来升级**：
-    *   这是高级话题，通常需要 GPU 配合（Hi-Z Buffer）或预计算（PVS）。
-    *   **初期不必考虑**，除非你是做室内 FPS 游戏。
+* **未来升级**：
+  * 这是高级话题，通常需要 GPU 配合（Hi-Z Buffer）或预计算（PVS）。
+  * **初期不必考虑**，除非你是做室内 FPS 游戏。
 
 ### 3. 未来工程架构的变化预测 (Roadmap)
 
 为了记录你的技术路线图，以下是未来可能发生的架构演变：
 
 #### 阶段 1：当前的 2D 渲染器 (BatchRenderer 2D)
-*   **Camera**: `OrthographicCamera`
-*   **Culling**: 简单的 2D AABB Check。
-*   **Submit**: 直接 `DrawQuad`。
+
+* **Camera**: `OrthographicCamera`
+* **Culling**: 简单的 2D AABB Check。
+* **Submit**: 直接 `DrawQuad`。
 
 #### 阶段 2：引入场景图 (Scene Graph)
-*   不再手动调用 `DrawQuad`。
-*   创建一个 `Scene` 类，里面存着 `Entity` (实体)。
-*   `Entity` 挂载 `SpriteRendererComponent`。
-*   `Scene::OnUpdate` -> 遍历实体 -> 计算变换 -> 提交给 Renderer。
+
+* 不再手动调用 `DrawQuad`。
+* 创建一个 `Scene` 类，里面存着 `Entity` (实体)。
+* `Entity` 挂载 `SpriteRendererComponent`。
+* `Scene::OnUpdate` -> 遍历实体 -> 计算变换 -> 提交给 Renderer。
 
 #### 阶段 3：3D 渲染器 (Renderer 3D)
-*   **Camera**: `PerspectiveCamera` (支持 FOV, Aspect, Near, Far)。
-*   **Culling**: 升级为 **Frustum Culling** (视锥体剔除)。
-    *   你需要写一个 `Frustum` 类，能从 VP 矩阵提取 6 个平面。
-    *   你需要写一个 `Math::CheckAABBFrustum(aabb, frustum)` 函数。
-*   **Sorting**: 3D 渲染必须排序！
-    *   **不透明物体**：从近到远画（利用 Z-Buffer 减少 Overdraw）。
-    *   **透明物体**：从远到近画（保证混合正确）。
-    *   这意味着 `BatchRenderer` 不能收到一个画一个，而是要先收集所有指令，排完序再 `Flush`。
+
+* **Camera**: `PerspectiveCamera` (支持 FOV, Aspect, Near, Far)。
+* **Culling**: 升级为 **Frustum Culling** (视锥体剔除)。
+  * 你需要写一个 `Frustum` 类，能从 VP 矩阵提取 6 个平面。
+  * 你需要写一个 `Math::CheckAABBFrustum(aabb, frustum)` 函数。
+* **Sorting**: 3D 渲染必须排序！
+  * **不透明物体**：从近到远画（利用 Z-Buffer 减少 Overdraw）。
+  * **透明物体**：从远到近画（保证混合正确）。
+  * 这意味着 `BatchRenderer` 不能收到一个画一个，而是要先收集所有指令，排完序再 `Flush`。
 
 #### 阶段 4：多材质与多 Pass
-*   目前我们只支持单一 Shader。
-*   未来需要支持 `Material` 系统。
-*   `Renderer` 需要按材质分组（Batching by Material），因为切换 Shader 开销很大。
+
+* 目前我们只支持单一 Shader。
+* 未来需要支持 `Material` 系统。
+* `Renderer` 需要按材质分组（Batching by Material），因为切换 Shader 开销很大。
 
 ### 总结记录 (建议保存到 note/general.md)
 
 > **渲染架构演进路线：**
-> 1.  **当前**：2D Batch Renderer + Shader Uniform Cache + 2D AABB Culling (CPU)。
-> 2.  **Next**：场景管理 (Scene) 与 实体组件系统 (ECS) 初步集成。
-> 3.  **Future 3D**：
->     *   Camera -> Perspective (透视)。
->     *   Culling -> Frustum Culling (视锥体 6 平面检测)。
->     *   Optimization -> 空间划分 (Quadtree/BVH) 解决 O(N) 遍历问题。
->     *   Pipeline -> 渲染排序 (Sorting) 与 材质批处理。
+>
+> 1. **当前**：2D Batch Renderer + Shader Uniform Cache + 2D AABB Culling (CPU)。
+> 2. **Next**：场景管理 (Scene) 与 实体组件系统 (ECS) 初步集成。
+> 3. **Future 3D**：
+>    * Camera -> Perspective (透视)。
+>    * Culling -> Frustum Culling (视锥体 6 平面检测)。
+>    * Optimization -> 空间划分 (Quadtree/BVH) 解决 O(N) 遍历问题。
+>    * Pipeline -> 渲染排序 (Sorting) 与 材质批处理。
 
 目前的 AABB + 直接剔除是 **2D 游戏最完美、最经济** 的方案，完全不需要过度设计。等到真正做 3D 时，再重构剔除模块即可（因为那时候数据结构都会变）。
+
+```cpp
+
+void Renderer2D::EndBatch() {
+    // --- DEBUG START ---
+    if (!s_Data.QuadVertexBuffer) {
+        std::cout << "[CRITICAL] s_Data.QuadVertexBuffer is NULL! Did you call Renderer2D::Init()?" << std::endl;
+        return; // 防止崩溃
+    }
+    if (!s_Data.WhiteTexture) {
+        std::cout << "[CRITICAL] s_Data.WhiteTexture is NULL!" << std::endl;
+    }
+    if (s_Data.TextureSlotIndex > 0 && s_Data.TextureSlots[0] == nullptr) {
+        std::cout << "[CRITICAL] Texture Slot 0 is NULL!" << std::endl;
+    }
+    std::cout << "[DEBUG] QuadBufferPtr - QuadBufferBase: " 
+              << ((uint8_t*)s_Data.QuadBufferPtr - (uint8_t*)s_Data.QuadBufferBase.get()) 
+              << " bytes" << std::endl;
+    std::cout << "[DEBUG] IndexCount: " << s_Data.IndexCount << std::endl;
+    std::cout << "[DEBUG] TextureSlotIndex: " << s_Data.TextureSlotIndex << std::endl;
+
+    // --- DEBUG END ---
+    uint32_t dataSize = (uint8_t*)s_Data.QuadBufferPtr - (uint8_t*)s_Data.QuadBufferBase.get();
+
+    if (dataSize > 0) {
+        // Upload data to GPU
+        s_Data.QuadVertexBuffer->SetData(s_Data.QuadBufferBase.get(), dataSize);
+
+        for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++) {
+            s_Data.TextureSlots[i]->Bind(i);
+        }
+        // Draw
+        RenderCommand::DrawIndexed(s_Data.QuadVertexArray, s_Data.IndexCount);
+        s_Data.Stats.DrawCalls++;
+    }
+}
+
+```

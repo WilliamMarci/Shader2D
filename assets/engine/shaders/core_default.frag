@@ -1,9 +1,19 @@
-#version 330 core
+#version 450 core
 
-in vec4 ourColor; // 改成 vec4
-out vec4 FragColor;
+layout(location = 0) out vec4 color;
 
-void main()
-{
-    FragColor = ourColor;
+in vec4 v_Color;
+in vec2 v_TexCoord;
+in float v_TexIndex;
+
+uniform sampler2D u_Textures[32];
+
+void main() {
+    vec4 texColor = v_Color;
+
+    int index = int(v_TexIndex);
+    
+    texColor *= texture(u_Textures[index], v_TexCoord);
+
+    color = texColor;
 }
