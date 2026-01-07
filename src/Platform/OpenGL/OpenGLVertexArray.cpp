@@ -1,6 +1,8 @@
 #include "Platform/OpenGL/OpenGLVertexArray.h"
 #include <glad/glad.h>
 
+namespace Engine {
+
 static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type) {
     switch (type) {
         case ShaderDataType::Float:    return GL_FLOAT;
@@ -62,4 +64,6 @@ void OpenGLVertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& index
     indexBuffer->Bind();
 
     m_IndexBuffer = indexBuffer;
+}
+
 }

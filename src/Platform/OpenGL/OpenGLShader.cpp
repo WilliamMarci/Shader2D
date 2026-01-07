@@ -6,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace Engine {
+
 OpenGLShader::OpenGLShader(const std::string& vertexPath, const std::string& fragmentPath) {
     std::string vertexSource = ReadFile(vertexPath);
     std::string fragmentSource = ReadFile(fragmentPath);
@@ -114,4 +116,6 @@ void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value) {
     GLint location = glGetUniformLocation(m_RendererID, name.c_str());
     // GL_FALSE 表示不需要转置矩阵 (GLM 默认列主序，OpenGL 也是列主序)
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
 }

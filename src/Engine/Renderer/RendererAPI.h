@@ -4,6 +4,8 @@
 #include <memory>
 #include "Engine/Renderer/VertexArray.h" 
 
+namespace Engine {
+
 class RendererAPI {
 public:
     enum class API {
@@ -26,3 +28,5 @@ public:
 private:
     static API s_API;
 };
+
+}

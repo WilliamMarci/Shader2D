@@ -1,33 +1,37 @@
-#include "Input.h"
+#include "Engine/Input/Input.h"
+#include "Engine/Core/Application.h"
+
 #include <GLFW/glfw3.h>
 
-Window* Input::s_Window = nullptr;
+namespace Engine {
 
-void Input::Init(Window* window) { s_Window = window; }
+    bool Input::IsKeyPressed(KeyCode keycode) {
+        auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
+        auto state = glfwGetKey(window, static_cast<int32_t>(keycode));
+        return state == GLFW_PRESS || state == GLFW_REPEAT;
+    }
 
-bool Input::IsKeyPressed(int keycode) {
-    if (!s_Window) { return false; }
-    auto window = static_cast<GLFWwindow*>(s_Window->GetNativeWindow());
-    auto state = glfwGetKey(window, keycode);
+    bool Input::IsMouseButtonPressed(MouseCode button) {
+        auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
+        auto state = glfwGetMouseButton(window, static_cast<int32_t>(button));
+        return state == GLFW_PRESS;
+    }
 
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
-}
+    std::pair<float, float> Input::GetMousePosition() {
+        auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        return { (float)xpos, (float)ypos };
+    }
 
-bool Input::IsMouseButtonPress(int button) {
-    if (!s_Window) { return false; }
+    float Input::GetMouseX() {
+        auto [x, y] = GetMousePosition();
+        return x;
+    }
 
-    auto window = static_cast<GLFWwindow*>(s_Window->GetNativeWindow());
-    auto state = glfwGetMouseButton(window, button);
-    
-    return state == GLFW_PRESS;
-}
+    float Input::GetMouseY() {
+        auto [x, y] = GetMousePosition();
+        return y;
+    }
 
-std::pair<float, float> Input::GetMousePosition(){
-    if (!s_Window) { return {0.0f, 0.0f}; }
-    
-    auto window = static_cast<GLFWwindow*>(s_Window->GetNativeWindow());
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-
-    return {(float)xpos, (float)ypos};
 }

@@ -1,23 +1,24 @@
 #pragma once
 
 // Standard Library
+#include <algorithm>
+#include <array>
+#include <functional>
 #include <iostream>
 #include <memory>
-#include <utility>
-#include <algorithm>
-#include <functional>
-
-#include <string>
 #include <sstream>
-#include <vector>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <array>
+#include <utility>
+#include <vector>
 
 // Math library
 #include <glm/glm.hpp>
 
+// Engine Core
+#include "Engine/Core/Log.h"
 // OS
 #ifdef _WIN32
-    #include <Windows.h>
+#include <Windows.h>
 #endif

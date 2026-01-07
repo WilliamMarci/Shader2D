@@ -17,6 +17,10 @@ target_include_directories(stb_image PUBLIC vendor/stb_image)
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE vendor/glm)
 
+add_library(spdlog INTERFACE)
+target_compile_definitions(spdlog INTERFACE SPDLOG_HEADER_ONLY)
+target_include_directories(spdlog INTERFACE vendor/spdlog)
+
 include_directories(src)
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
@@ -32,6 +36,7 @@ target_link_libraries(MyGameClient
     glm         # glm math library
     GL          # Linux graphics driver (libGL)
     dl          # dynamic loader (required by glad)
+    spdlog      # logging library
     pthread     # threading library (needed for client/server architecture in the future)
 )
 

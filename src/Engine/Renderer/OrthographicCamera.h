@@ -1,6 +1,8 @@
 #pragma once
 #include "Engine/Renderer/Camera.h"
 
+namespace Engine {
+
 class OrthographicCamera : public Camera {
 public:
     OrthographicCamera(float aspectRatio);
@@ -26,3 +28,5 @@ private:
     float m_AspectRatio;
     float m_ZoomLevel = 1.0f;
 };
+
+}

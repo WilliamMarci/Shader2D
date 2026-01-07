@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+namespace Engine {
+
 std::shared_ptr<Shader> Shader::Create(const std::string& vertexPath, const std::string& fragmentPath) {
     switch (RendererAPI::GetAPI()) {
         case RendererAPI::API::None:    
@@ -15,4 +17,6 @@ std::shared_ptr<Shader> Shader::Create(const std::string& vertexPath, const std:
 
     std::cerr << "Unknown RendererAPI!" << std::endl;
     return nullptr;
+}
+
 }

@@ -7,6 +7,8 @@
 #include <memory>
 #include <vector>
 
+namespace Engine {
+
 struct Vertex {
     glm::vec3 Position;
     glm::vec4 Color;
@@ -44,3 +46,5 @@ public:
     static void EndBatch();
     static bool IsOnScreen(const glm::vec2& pos, const glm::vec2& size);
 };
+
+}

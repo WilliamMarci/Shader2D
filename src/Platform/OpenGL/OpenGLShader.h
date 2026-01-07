@@ -5,6 +5,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace Engine {
+
 class OpenGLShader : public Shader {
   public:
     OpenGLShader(const std::string& vertexPath, const std::string& fragmentPath);
@@ -29,3 +31,5 @@ class OpenGLShader : public Shader {
     uint32_t m_RendererID;
     std::unordered_map<std::string, int> m_UniformLocationCache;
 };
+
+}

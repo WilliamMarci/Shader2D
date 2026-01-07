@@ -1,4 +1,4 @@
-# Code Style Guide
+# 1.  Code Style Guide
 
 ## 1. Directory and File Structure
 
@@ -96,3 +96,47 @@ To ensure cross-platform compatibility and correct memory layout for GPU data, s
 * **Strings**:
     * Use `std::string` for general text.
     * Use `const char*` only for static string literals or interfacing with C-APIs (like ImGui or OpenGL).
+
+# 2. Design Philosophy & Architecture
+
+## 2.1 The "Brain" vs. "Limbs" Separation
+The engine is strictly divided into two layers to ensure cross-platform capability without polluting the core logic.
+
+*   **Engine (The Brain)**: Located in `src/Engine`.
+    *   Defines **Interfaces** (What to do).
+    *   Handles high-level logic (Scene management, ECS, Math, Physics simulation).
+    *   **Rule**: Never include platform-specific headers (e.g., `<GLFW/glfw3.h>`, `<glad/glad.h>`, `<X11/...>`) in Engine header files.
+    *   **Rule**: Use `void*` or incomplete types if a handle must be stored.
+
+*   **Platform (The Limbs)**: Located in `src/Platform`.
+    *   Implements **Interfaces** (How to do it).
+    *   Interacts directly with hardware drivers or OS APIs.
+    *   **Rule**: Organized by **Functionality/Technology**, not by Operating System.
+        *   ✅ `Platform/OpenGL` (Graphics implementation)
+        *   ✅ `Platform/Desktop` (Windowing & Input via GLFW)
+        *   ❌ `Platform/Linux` (Avoid OS-based folder names)
+
+## 2.2 Zero Ping-Pong Dependency
+We strictly forbid the "Ping-Pong" calling pattern (`Engine` calls `Platform` wrapper, which calls another `Engine` utility, which calls `Platform`...).
+
+*   **Implementation Ownership**: The Platform layer should contain the **full implementation** of a feature.
+    *   *Bad*: `Engine::Input` calls `Platform::WindowsInput`, which calls `Engine::KeyConverter`, which calls `GLFW`.
+    *   *Good*: `Platform::DesktopInput` directly implements `Engine::Input` interface using GLFW calls.
+*   **Factory Pattern**: The Engine only knows about the interface (e.g., `Window`). The instantiation happens in the `.cpp` file using a Factory method (e.g., `Window::Create()`), controlled by build macros.
+
+## 2.3 Functional Organization over OS Separation
+Since we primarily develop on Linux but aim for portability:
+*   Do not create separate files for `LinuxWindow.cpp` and `WindowsWindow.cpp` if they share 90% of the code (e.g., via GLFW).
+*   Use generic names like `DesktopWindow.cpp`.
+*   Platform-specific nuances (if any) should be handled via `#ifdef` macros *inside* the generic implementation file, or by specific build system exclusions, rather than duplicating files.
+
+## 2.4 Render Hardware Interface (RHI)
+*   **Renderer** (Engine) decides **what** to draw (sorting, culling, batching).
+*   **OpenGL/Vulkan** (Platform) decides **how** to submit commands to the GPU.
+*   The `Renderer` should not issue direct `glDraw...` calls. It should submit `RenderCommands` to the `RendererAPI`.
+
+## 2.5 Strict Initialization Order
+1.  **Log System**: Must be initialized first.
+2.  **Window/Context**: Required for graphics context.
+3.  **Renderer Core**: Capabilities check, shader compilation.
+4.  **Application/Layers**: Game logic.

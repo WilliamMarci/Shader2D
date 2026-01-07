@@ -9,20 +9,31 @@
 - [x] **输入系统**: `Input` 类, 键盘/鼠标状态获取.
 - [x] **OpenGL 上下文**: GLAD 初始化, 错误回调.
 
-## 🚧 阶段二：渲染核心 (Phase 2: The Renderer)
-**目标：** 实现高效的 2D 批处理渲染，这是所有视觉输出的基础。
+## 🚧 阶段二：渲染核心与重构 (Phase 2: Renderer Core & Refactor)
+**目标：** 建立稳健、可扩展的 2D 渲染管线。消除重复代码，支持图集与动画。
 **当前状态：进行中**
 
 - [x] **Shader 系统**: 加载、编译、Uniform 缓存.
 - [x] **摄像机系统**: `OrthographicCamera`, Zoom (缩放), View-Projection 矩阵.
 - [x] **基础批处理**: `BatchRenderer` 架构, 巨大的 VBO, 基础 Quad 绘制.
 - [x] **CPU 剔除**: AABB 视锥剔除 (Culling).
-- [ ] **纹理支持 (Texture Support)**
-  - [ ] 集成 `stb_image`.
-  - [ ] 编写 `Texture2D` 类 (Create, Bind, Slot Management).
-  - [ ] 修改 `BatchRenderer` 支持多纹理槽位 (`sampler2D u_Textures[32]`).
-  - [ ] 实现 `DrawQuad` 的纹理重载版本.
+- [ ] **渲染器重构 (Renderer Refactoring)** 🔥 *(New)*
+  - [ ] **统一提交接口**: 实现私有函数 `DrawQuadInternal`，收拢所有写 Buffer 的逻辑.
+  - [ ] **清理公开 API**: 让所有 `DrawQuad` 重载版本都调用 `DrawQuadInternal`，避免修改一处动全身.
+  - [ ] **扩展顶点结构**: 规范化 `QuadVertex` 结构体，为未来添加 Normal/EntityID 预留空间.
+- [ ] **高级纹理与动画 (Advanced Texture & Animation)** 🔥 *(New)*
+  - [ ] 集成 `stb_image` 与 `Texture2D` 类封装.
+  - [ ] **子纹理系统 (`SubTexture2D`)**: 实现基于 UV 坐标切割纹理，支持 Sprite Sheet (图集).
+  - [ ] **精灵组件 (`Sprite` & `SpriteAnimation`)**: 
+    - [ ] 创建 `Sprite` 类 (持有 SubTexture, Color, Tiling).
+    - [ ] 创建 `SpriteAnimation` 类 (管理帧序列、播放速度、当前 UV).
 - [ ] **混合与旋转**: `glBlendFunc` (透明度) 和 Z 轴旋转支持.
+
+### Additional Notes
+
+- [x] 添加LOG系统和宏定义，方便调试和日志记录。
+- [ ] Event机制，重构现有的事件处理系统，使其更灵活和易于扩展。
+- [ ] 设置Math库，统一使用GLM进行向量和矩阵运算， 向引擎用户暴露常用类型如`vec2`, `vec3`, `mat4`等，不必每次都引用glm.h.
 
 ## 🎨 阶段三：材质与资源管理 (Phase 3: Material & Resources)
 **目标：** 建立统一的资源管线，为未来的“风格化渲染”做准备。我们需要像处理 3D 材质一样处理 2D 精灵。
@@ -31,13 +42,14 @@
   - [ ] 单例模式 `ResourceManager`.
   - [ ] **缓存机制**: 避免重复加载同一个纹理/Shader (使用 `std::unordered_map`).
   - [ ] **异步加载原型**: 预留接口，未来在独立线程加载大资源。
-- [ ] **高级材质系统 (Material System)**
-  - [ ] 创建 `Material` 基类: 持有 `Shader*` 和 `Uniform` 参数表.
-  - [ ] **多贴图支持**: 不仅支持 `Albedo` (颜色)，还要支持 `NormalMap` (法线), `Emission` (自发光).
-  - [ ] **材质实例 (Material Instance)**: 允许不同物体共用一个 Shader 但参数不同 (如颜色、粗糙度).
+- [ ] **现代材质系统 (Modern Material System)** 🔥 *(Updated)*
+  - [ ] **材质基类 (`Material`)**: 
+    - [ ] 这是一个数据容器，持有 `Shader` 引用和参数表 (Uniform Buffer).
+    - [ ] 允许设置 `AlbedoMap`, `NormalMap`, `Roughness` 等参数.
+  - [ ] **渲染器适配**: 修改 `Renderer2D`，使其能根据 `Material->GetShaderID()` 进行批处理分类 (Sorting & Batching).
+  - [ ] **材质实例 (Material Instance)**: 允许不同物体共用一个 Shader 但参数不同 (如红色塑料 vs 蓝色塑料).
 - [ ] **Shader 库**: 内置常用 Shader (`Unlit`, `Standard2D`, `PixelArt`).
   - [ ] 统一规范：标准 uniform/attribute 列表（MVP / Albedo / Normal / Roughness / UV）。
-  - [ ] Shader 文件示例与预设材质（便于快速调试）。
   - [ ] Shader 热重载：检测文件变化并重新编译替换运行时 Shader。
 - [ ] **模型导入器 (Model Importer)**
   - [ ] 集成 Assimp：引入并封装一个简单的导入接口，支持 .obj、.gltf 等常见格式。
@@ -60,7 +72,6 @@
   - [ ] Outline (描边): 基于法线扩充或后处理的描边算法.
   - [ ] Dithering (抖动): 模拟复古 PS1 风格的半透明效果.
 - [ ] 混合渲染测试: 在 2D 背景图上渲染一个旋转的 3D 卡通角色.
-
 
 ## 🛠️ 阶段四：开发者工具 (Phase 4: Tooling)
 **目标：** “工欲善其事，必先利其器”。在做复杂的 C/S 逻辑前，必须有可视化调试工具。

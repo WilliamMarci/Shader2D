@@ -3,6 +3,8 @@
 #include <memory>
 #include "Engine/Renderer/Buffer.h"
 
+namespace Engine {
+
 class VertexArray {
 public:
     virtual ~VertexArray() = default;
@@ -18,3 +20,5 @@ public:
 
     static std::shared_ptr<VertexArray> Create();
 };
+
+}

@@ -2,6 +2,8 @@
 
 #include "Engine/Renderer/Buffer.h"
 
+namespace Engine {
+
 class OpenGLVertexBuffer : public VertexBuffer {
 public:
     OpenGLVertexBuffer(uint32_t size);
@@ -35,3 +37,5 @@ private:
     uint32_t m_RendererID;
     uint32_t m_Count;
 };
+
+}

@@ -906,3 +906,105 @@ void Renderer2D::EndBatch() {
 }
 
 ```
+
+
+这是一个非常好的切入点。在 Linux Wayland (以及 Windows/Mac) 上开发，且要做到 Client 层与 Platform 层解耦，我们需要采用 **PIMPL (Pointer to Implementation)** 或者 **虚基类接口 (Interface/Implementation)** 的模式。
+
+参考 **Hazel**、**Godot** 或 **Unreal** 的底层架构，我们分三步来规划。
+
+### 核心设计理念
+
+1.  **Engine 层 (抽象层)**：定义“窗口是什么”以及“窗口能做什么”。不包含任何 GLFW/Windows API 代码。
+2.  **Platform 层 (实现层)**：包含具体的 GLFW 代码。
+3.  **Factory (工厂模式)**：Engine 层请求创建一个窗口，Platform 层根据当前操作系统返回正确的子类。
+
+---
+
+### 第一步：定义 Window 接口 (Engine/Core/Window.h)
+
+我们需要一个纯虚类（Interface），规定所有平台的窗口必须具备的功能。
+
+**设计规划：**
+*   **数据结构 `WindowProps`**：用来传递创建窗口时的参数（标题、宽、高），而不是散乱的变量。
+*   **虚函数 `OnUpdate()`**：每帧调用（SwapBuffers, PollEvents）。
+*   **虚函数 `GetWidth()`, `GetHeight()`**：获取状态。
+*   **虚函数 `SetEventCallback(...)`**：**这是未来的关键**。窗口会产生事件（Resize, Close, KeyPress），它需要一个回调函数把这些事件“扔”给 Application 去处理，而不是自己处理。
+*   **虚函数 `SetVSync(bool)`**：垂直同步控制。
+*   **虚函数 `GetNativeWindow()`**：返回 `void*`。这是给 Input 系统留的后门，Input 系统在 Platform 层实现时，会把它强转回 `GLFWwindow*`。
+*   **静态函数 `Create(...)`**：这是唯一的入口。
+
+**目录结构：**
+```text
+src/Engine/Core/Window.h  <-- 只有纯虚函数
+```
+
+---
+
+### 第二步：实现 Platform Window (Platform/OpenGL/GlfwWindow.h/cpp)
+
+这是你现有 `Window.cpp` 代码的归宿，但它需要继承自上面的 `Engine::Window`。
+
+**设计规划：**
+*   **继承**：`class GlfwWindow : public Window`。
+*   **成员变量**：`GLFWwindow* m_Window`，以及一个结构体用来存宽、高、标题、VSync状态和**事件回调函数**。
+*   **GLFW 回调对接**：这是最复杂的部分。
+    *   你需要在 `Init()` 里调用 `glfwSetWindowSizeCallback`, `glfwSetKeyCallback` 等。
+    *   在这些 GLFW 的回调函数里，你不能写游戏逻辑。
+    *   你需要构造一个 `Event` 对象（比如 `WindowResizeEvent`），然后调用 `m_Data.EventCallback(event)`。
+    *   这样，GLFW 的事件就转化成了 Engine 的事件，传给了 Application。
+
+**目录结构：**
+```text
+src/Platform/OpenGL/GlfwWindow.h
+src/Platform/OpenGL/GlfwWindow.cpp
+```
+
+---
+
+### 第三步：Input 系统的解耦规划
+
+Input 系统需要查询窗口状态，但 `Engine::Input` 不能包含 `GLFW/glfw3.h`。
+
+**设计规划：**
+1.  **Engine/Input/Input.h**：
+    *   保持纯静态接口：`IsKeyPressed(KeyCode key)`。
+    *   **不持有** `s_Window`。
+2.  **Platform/Input/Input.cpp** (或者 `LinuxInput.cpp`)：
+    *   这里包含 `GLFW/glfw3.h`。
+    *   这里包含 `Engine/Core/Application.h`。
+    *   实现逻辑：
+        1.  `auto& app = Application::Get();`
+        2.  `void* nativeWindow = app.GetWindow().GetNativeWindow();`
+        3.  `auto* window = static_cast<GLFWwindow*>(nativeWindow);`
+        4.  调用 `glfwGetKey(window, ...)`。
+
+**核心逻辑**：通过 `void*` 指针在 Engine 层传递窗口句柄，只有在 Platform 层的 `.cpp` 文件里才把它“还原”为 `GLFWwindow*`。
+
+---
+
+### 第四步：事件系统 (Event System) 预告
+
+为了支持你说的“调整窗口大小”、“全屏”等，我们需要一个事件系统。
+
+**规划（未来）：**
+*   **Event 基类**：所有事件的父类。
+*   **Dispatcher**：用来分发事件。
+*   **Application::OnEvent(Event& e)**：Application 接收所有事件，并派发给 Layer（游戏层/UI层）。
+
+**流程图：**
+1.  用户拖动窗口 -> Linux/Wayland 发送信号。
+2.  GLFW 捕获 -> 触发 `glfwSetWindowSizeCallback`。
+3.  `GlfwWindow` 里的回调 -> 创建 `WindowResizeEvent` -> 调用 `EventCallback`。
+4.  `Application::OnEvent` 收到事件 -> 调整 OpenGL Viewport -> 告诉游戏层“窗口变了”。
+
+---
+
+### 总结：我们需要做的事情顺序
+
+1.  **定义事件系统基础**（Event.h, KeyEvent.h, MouseEvent.h, ApplicationEvent.h）。没有这个，Window 的回调没法写。
+2.  **定义 Window 抽象接口**。
+3.  **实现 GlfwWindow**（搬运你现在的代码，并加上事件回调）。
+4.  **修改 Application**，让它持有 `Scope<Window>` 而不是具体的类。
+5.  **修改 Input**，让它通过 `Application` 获取 `void*` 窗口句柄。
+
+你觉得这个规划如何？如果同意，我们**先从最基础的 Event 系统开始**（只需要几个头文件），因为它是 Window 和 Application 通信的语言。

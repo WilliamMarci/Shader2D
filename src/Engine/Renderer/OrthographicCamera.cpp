@@ -1,6 +1,8 @@
 #include "OrthographicCamera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+namespace Engine {
+
 OrthographicCamera::OrthographicCamera(float aspectRatio) : m_AspectRatio(aspectRatio) {
     SetProjection(aspectRatio, m_ZoomLevel);
 }
@@ -32,4 +34,6 @@ void OrthographicCamera::RecalculateViewMatrix() {
 
     m_ViewMatrix = glm::inverse(transform);
     m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
+}
+
 }

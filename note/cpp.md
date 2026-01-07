@@ -3,6 +3,48 @@
 ** `<memory>` ** - 智能指针（`std::unique_ptr`，`std::shared_ptr`） 替代`new`和`delete`，防止内存泄漏。
 
 
+
+## 常用工具
+
+### `gdb` - GNU 调试器，命令行调试 C++ 程序。
+
+### Misc
+
+* `c++filt` 用于解码 C++ 符号名（demangle）。
+* `addr2line` 将地址转换为源代码文件和行号。
+* `nm` 列出目标文件中的符号。
+* `ldd` 
+
+### 将 C++ 代码和汇编对应的工具
+
+- Compiler Explorer (Godbolt)  
+  - 在线查看编译器输出并把源代码与生成的汇编并排显示，支持多种编译器/选项。网址：https://godbolt.org
+
+- objdump（本地，可对可执行文件/目标文件按源代码反汇编）  
+  - 典型用法（Intel 语法，显示源代码，demangle）：  
+    ```
+    g++ -g -O2 file.cpp -o a.out
+    objdump -d -S --demangle -M intel a.out > a.out.asm
+    ```
+  - 如果需要针对单个目标文件：`objdump -d -S file.o`
+
+- 直接由编译器生成汇编（便于带注释的汇编）  
+  - g++：  
+    ```
+    g++ -g -O2 -S -fverbose-asm -masm=intel file.cpp -o file.s
+    ```
+  - clang：同理可用 `clang++ -g -O2 -S -fverbose-asm -masm=intel`
+
+- 其他有用的提示  
+  - 要得到可映射到源代码的输出，编译时加 `-g`（生成调试信息）。  
+  - 优化（-O2/-O3）会导致函数内联、代码重排或消失，影响一一对应；调试逐步查看可先用 `-O0` 或禁用内联（`-fno-inline`）。  
+  - 对于已运行地址想查源行，可配合 `addr2line` 或 `eu-addr2line`：`addr2line -e a.out 0xADDRESS`。  
+  - 对大型工程推荐先用 Compiler Explorer 做快速实验，本地用 objdump 或编译器的 `-S` 生成详细结果。
+
+## 常用调试函数
+
+* `__attribute__((noinline))` - 防止函数内联，方便调试。
+
 ## 一些问题
 
 没问题！面向对象（OOP）里的 `static` 和 `this` 确实比较抽象。我们用**“图纸”**和**“实物”**的比喻，配合图解来彻底搞懂它。

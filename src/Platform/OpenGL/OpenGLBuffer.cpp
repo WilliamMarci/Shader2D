@@ -1,6 +1,8 @@
 #include "Platform/OpenGL/OpenGLBuffer.h"
 #include <glad/glad.h>
 
+namespace Engine {
+
 // --- VertexBuffer ---
 
 OpenGLVertexBuffer::OpenGLVertexBuffer(uint32_t size) {
@@ -53,4 +55,6 @@ void OpenGLIndexBuffer::Bind() const {
 
 void OpenGLIndexBuffer::Unbind() const {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
 }

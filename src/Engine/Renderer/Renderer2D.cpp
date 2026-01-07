@@ -9,6 +9,8 @@
 #include <cstring>
 #include <iostream>
 
+namespace Engine {
+
 const size_t MAX_QUADS = 10000;
 const size_t MAX_VERTICES = MAX_QUADS * 4;
 const size_t MAX_INDICES = MAX_QUADS * 6;
@@ -172,18 +174,26 @@ void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, cons
     // (0)-----(1)
     s_Data.QuadBufferPtr->Position = {position.x - size.x * 0.5f, position.y - size.y * 0.5f, 0.0f};
     s_Data.QuadBufferPtr->Color = color;
+    s_Data.QuadBufferPtr->TexCoord = {0.0f, 0.0f}; 
+    s_Data.QuadBufferPtr->TexIndex = texIndex;     
     s_Data.QuadBufferPtr++;
 
     s_Data.QuadBufferPtr->Position = {position.x + size.x * 0.5f, position.y - size.y * 0.5f, 0.0f};
     s_Data.QuadBufferPtr->Color = color;
+    s_Data.QuadBufferPtr->TexCoord = {1.0f * tilingFactor, 0.0f};
+    s_Data.QuadBufferPtr->TexIndex = texIndex;
     s_Data.QuadBufferPtr++;
 
     s_Data.QuadBufferPtr->Position = {position.x + size.x * 0.5f, position.y + size.y * 0.5f, 0.0f};
     s_Data.QuadBufferPtr->Color = color;
+    s_Data.QuadBufferPtr->TexCoord = {1.0f * tilingFactor, 1.0f * tilingFactor};
+    s_Data.QuadBufferPtr->TexIndex = texIndex;
     s_Data.QuadBufferPtr++;
 
     s_Data.QuadBufferPtr->Position = {position.x - size.x * 0.5f, position.y + size.y * 0.5f, 0.0f};
     s_Data.QuadBufferPtr->Color = color;
+    s_Data.QuadBufferPtr->TexCoord = {0.0f, 1.0f * tilingFactor};
+    s_Data.QuadBufferPtr->TexIndex = texIndex;
     s_Data.QuadBufferPtr++;
 
     s_Data.IndexCount += 6;
@@ -271,3 +281,5 @@ bool Renderer2D::IsOnScreen(const glm::vec2& pos, const glm::vec2& size) {
 RendererStats& Renderer2D::GetStats() { return s_Data.Stats; }
 
 void Renderer2D::ResetStats() { memset(&s_Data.Stats, 0, sizeof(RendererStats)); }
+
+}

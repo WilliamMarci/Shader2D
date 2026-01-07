@@ -3,6 +3,8 @@
 #include "Engine/Renderer/RendererAPI.h"
 #include "Engine/Renderer/VertexArray.h" 
 
+namespace Engine {
+
 class OpenGLRendererAPI : public RendererAPI {
 public:
     virtual void Init() override;
@@ -12,3 +14,5 @@ public:
 
     virtual void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray, uint32_t indexCount = 0) override;
 };
+
+}

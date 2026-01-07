@@ -1,0 +1,139 @@
+<svg width="1000" height="650" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" fill="#555">
+      <path d="M0,0 L0,6 L9,3 z" />
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" fill="#d32f2f">
+      <path d="M0,0 L0,6 L9,3 z" />
+    </marker>
+  </defs>
+  
+  <rect width="100%" height="100%" fill="#f8f9fa"/>
+  
+  <!-- ================= TOP: COMPILE TIME ================= -->
+  <rect x="0" y="0" width="1000" height="180" fill="#e3f2fd" fill-opacity="0.3"/>
+  <text x="20" y="30" font-family="sans-serif" font-size="20" font-weight="bold" fill="#1565c0">PHASE 1: 编译期 (Compile Time)</text>
+  <text x="20" y="55" font-family="sans-serif" font-size="14" fill="#555">编译器决定布局，计算偏移量，生成指令模板</text>
+
+  <!-- Source Code Analysis -->
+  <g transform="translate(50, 70)">
+    <rect x="0" y="0" width="220" height="90" fill="#fff" stroke="#1565c0" rx="5"/>
+    <text x="10" y="20" font-family="monospace" font-weight="bold" fill="#333">class RendererAPI {</text>
+    <text x="10" y="40" font-family="monospace" fill="#777">  virtual ~Dtor(); // +0</text>
+    <text x="10" y="60" font-family="monospace" fill="#777">  virtual SetColor(); // +8</text>
+    <text x="10" y="80" font-family="monospace" font-weight="bold" fill="#d32f2f">  virtual Clear(); // +16</text>
+    <text x="200" y="80" font-family="sans-serif" font-size="12" fill="#d32f2f">← Index 2</text>
+  </g>
+
+  <!-- Compiler Decision -->
+  <path d="M280 115 L 350 115" stroke="#1565c0" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <g transform="translate(360, 85)">
+    <rect x="0" y="0" width="280" height="60" fill="#fff9c4" stroke="#fbc02d" rx="5"/>
+    <text x="10" y="25" font-family="sans-serif" font-size="12" font-weight="bold">编译器生成汇编指令:</text>
+    <text x="10" y="45" font-family="monospace" font-size="14" fill="#d32f2f">call [rax + 16]</text>
+    <text x="130" y="45" font-family="sans-serif" font-size="11" fill="#555">(16是写死的)</text>
+  </g>
+
+  <!-- ================= BOTTOM: RUNTIME ================= -->
+  <text x="20" y="210" font-family="sans-serif" font-size="20" font-weight="bold" fill="#2e7d32">PHASE 2: 运行期 (Runtime Memory)</text>
+  
+  <!-- 1. STACK -->
+  <g transform="translate(50, 250)">
+    <text x="0" y="-10" font-weight="bold" fill="#1565c0">1. STACK (栈)</text>
+    <rect x="0" y="0" width="140" height="300" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+    
+    <!-- Variable ptr -->
+    <g transform="translate(10, 50)">
+      <rect x="0" y="0" width="120" height="60" fill="#fff" stroke="#1565c0"/>
+      <text x="5" y="20" font-family="monospace" font-weight="bold">ptr</text>
+      <text x="5" y="45" font-family="monospace" fill="#d32f2f">0xHeap1000</text>
+      <text x="80" y="20" font-size="10" fill="#999">Addr</text>
+    </g>
+    
+    <text x="10" y="150" font-size="12" fill="#1565c0" font-style="italic">保存对象的地址</text>
+  </g>
+
+  <!-- 2. HEAP -->
+  <g transform="translate(280, 250)">
+    <text x="0" y="-10" font-weight="bold" fill="#e65100">2. HEAP (堆)</text>
+    <rect x="0" y="0" width="160" height="300" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+    
+    <!-- Object -->
+    <g transform="translate(10, 50)">
+      <text x="0" y="-5" font-size="12" fill="#e65100" font-weight="bold">Object (0xHeap1000)</text>
+      <rect x="0" y="0" width="140" height="180" fill="#fff" stroke="#e65100"/>
+      
+      <!-- vptr -->
+      <rect x="0" y="0" width="140" height="40" fill="#ffe0b2" stroke="#e65100"/>
+      <text x="5" y="25" font-family="monospace" font-weight="bold">vptr</text>
+      <text x="50" y="25" font-family="monospace" fill="#2e7d32">0xStatic2000</text>
+      
+      <!-- Members -->
+      <rect x="0" y="40" width="140" height="140" fill="#fff" stroke="none"/>
+      <text x="30" y="80" fill="#ccc">int data...</text>
+    </g>
+  </g>
+
+  <!-- 3. DATA/RDATA -->
+  <g transform="translate(520, 250)">
+    <text x="0" y="-10" font-weight="bold" fill="#2e7d32">3. .DATA/.RDATA (静态区)</text>
+    <rect x="0" y="0" width="180" height="300" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+    
+    <!-- vtable -->
+    <g transform="translate(10, 50)">
+      <text x="0" y="-5" font-size="12" fill="#2e7d32" font-weight="bold">vtable (0xStatic2000)</text>
+      <rect x="0" y="0" width="160" height="120" fill="#fff" stroke="#2e7d32"/>
+      
+      <rect x="0" y="0" width="160" height="30" fill="#f1f8e9" stroke="#ddd"/>
+      <text x="5" y="20" font-family="monospace" fill="#999">+0: ~Dtor</text>
+      
+      <rect x="0" y="30" width="160" height="30" fill="#f1f8e9" stroke="#ddd"/>
+      <text x="5" y="50" font-family="monospace" fill="#999">+8: SetColor</text>
+      
+      <!-- Target Entry -->
+      <rect x="0" y="60" width="160" height="30" fill="#c8e6c9" stroke="#2e7d32" stroke-width="2"/>
+      <text x="5" y="80" font-family="monospace" font-weight="bold">+16: 0xCode0030</text>
+    </g>
+  </g>
+
+  <!-- 4. TEXT -->
+  <g transform="translate(780, 250)">
+    <text x="0" y="-10" font-weight="bold" fill="#424242">4. .TEXT (代码区)</text>
+    <rect x="0" y="0" width="180" height="300" fill="#f5f5f5" stroke="#424242" stroke-width="2"/>
+    
+    <!-- Function Code -->
+    <g transform="translate(10, 110)">
+      <text x="0" y="-5" font-size="12" fill="#424242" font-weight="bold">Address: 0xCode0030</text>
+      <rect x="0" y="0" width="160" height="80" fill="#333" stroke="#000"/>
+      <text x="10" y="25" font-family="monospace" fill="#4caf50">OpenGL::Clear()</text>
+      <text x="10" y="45" font-family="monospace" fill="#fff">  mov ...</text>
+      <text x="10" y="65" font-family="monospace" fill="#fff">  call glClear</text>
+    </g>
+  </g>
+
+
+  <!-- ================= FLOW ARROWS (THE STORY) ================= -->
+  
+  <!-- Step 1: Stack to Heap -->
+  <path d="M140 300 L 280 300" stroke="#1565c0" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="170" y="275" width="80" height="20" fill="#fff" stroke="#1565c0"/>
+  <text x="175" y="290" font-size="11" fill="#1565c0" font-weight="bold">1. 找对象</text>
+
+  <!-- Step 2: Heap to vtable -->
+  <path d="M430 320 L 520 320" stroke="#e65100" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="440" y="295" width="70" height="20" fill="#fff" stroke="#e65100"/>
+  <text x="445" y="310" font-size="11" fill="#e65100" font-weight="bold">2. 找虚表</text>
+  <text x="445" y="340" font-size="10" fill="#555">rax = vptr</text>
+
+  <!-- Step 3: vtable to Code -->
+  <path d="M690 360 L 780 360" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="700" y="335" width="70" height="20" fill="#fff" stroke="#2e7d32"/>
+  <text x="705" y="350" font-size="11" fill="#2e7d32" font-weight="bold">3. 找函数</text>
+  <text x="700" y="380" font-size="10" fill="#555">call [rax+16]</text>
+
+  <!-- Connection from Compile Time to Runtime Offset -->
+  <path d="M500 145 L 500 220 L 600 220 L 600 310" stroke="#d32f2fff" stroke-width="1" stroke-dasharray="5,5" marker-end="url(#arrow-red)" fill="#ffffff00"/>
+  <text x="510" y="180" font-size="11" fill="#d32f2f" font-weight="bold">编译器写死的 +16</text>
+
+</svg>

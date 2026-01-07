@@ -3,6 +3,8 @@
 #include "Engine/Renderer/RendererAPI.h"
 #include "Engine/Renderer/VertexArray.h"
 
+namespace Engine {
+
 class RenderCommand {
 public:
     static void Init() {
@@ -26,3 +28,5 @@ public:
 private:
     static RendererAPI* s_RendererAPI;
 };
+
+}

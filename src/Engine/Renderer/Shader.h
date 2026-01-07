@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+namespace Engine {
+
 class Shader {
 public:
     virtual ~Shader() = default;
@@ -22,3 +24,5 @@ public:
 
     static std::shared_ptr<Shader> Create(const std::string& vertexPath, const std::string& fragmentPath);
 };
+
+}
