@@ -1,4 +1,4 @@
-#include "GlfwWindow.h"
+#include "DesktopWindow.h"
 
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Core.h"
@@ -7,9 +7,12 @@
 #include "Engine/Events/MouseEvent.h"
 #include "Engine/Events/KeyEvent.h"
 
-
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 namespace Engine {
+
+    extern void Input_SetContext(void* window);
 
     static bool s_GLFWInitialized = false;
 
@@ -18,18 +21,18 @@ namespace Engine {
     }
 
     std::unique_ptr<Window> Window::Create(const WindowProps& props) {
-        return std::make_unique<GlfwWindow>(props);
+        return std::make_unique<DesktopWindow>(props);
     }
 
-    GlfwWindow::GlfwWindow(const WindowProps& props) {
+    DesktopWindow::DesktopWindow(const WindowProps& props) {
         Init(props);
     }
 
-    GlfwWindow::~GlfwWindow() {
+    DesktopWindow::~DesktopWindow() {
         Shutdown();
     }
 
-    void GlfwWindow::Init(const WindowProps& props) {
+    void DesktopWindow::Init(const WindowProps& props) {
         m_Data.Title = props.Title;
         m_Data.Width = props.Width;
         m_Data.Height = props.Height;
@@ -50,6 +53,10 @@ namespace Engine {
         
         int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
         ENG_CORE_ASSERT(status, "Failed to initialize Glad!");
+
+
+        Input_SetContext(m_Window);
+
 
         glfwSetWindowUserPointer(m_Window, &m_Data);
         SetVSync(true);
@@ -129,16 +136,16 @@ namespace Engine {
         });
     }
 
-    void GlfwWindow::Shutdown() {
+    void DesktopWindow::Shutdown() {
         glfwDestroyWindow(m_Window);
     }
 
-    void GlfwWindow::OnUpdate() {
+    void DesktopWindow::OnUpdate() {
         glfwPollEvents();
         glfwSwapBuffers(m_Window);
     }
 
-    void GlfwWindow::SetVSync(bool enabled) {
+    void DesktopWindow::SetVSync(bool enabled) {
         if (enabled)
             glfwSwapInterval(1);
         else
@@ -147,7 +154,7 @@ namespace Engine {
         m_Data.VSync = enabled;
     }
 
-    bool GlfwWindow::IsVSync() const {
+    bool DesktopWindow::IsVSync() const {
         return m_Data.VSync;
     }
 }

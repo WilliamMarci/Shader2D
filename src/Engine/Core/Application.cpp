@@ -39,7 +39,6 @@ namespace Engine {
         dispatcher.Dispatch<WindowCloseEvent>(std::bind(&Application::OnWindowClose, this, std::placeholders::_1));
         dispatcher.Dispatch<WindowResizeEvent>(std::bind(&Application::OnWindowResize, this, std::placeholders::_1));
 
-        // 从上往下分发事件
         for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
             if (e.Handled) 
                 break;

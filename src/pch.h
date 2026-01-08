@@ -18,6 +18,7 @@
 
 // Engine Core
 #include "Engine/Core/Log.h"
+#include "Engine/Core/Math.h"
 // OS
 #ifdef _WIN32
 #include <Windows.h>

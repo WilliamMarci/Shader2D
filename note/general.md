@@ -100,6 +100,7 @@ MyIndieProject/
 ### E. UI 系统
 *   **工具/调试 UI:** 集成 **Dear ImGui** (必选，极大提高开发效率)。
 *   **游戏内 HUD:** 使用自己的批处理渲染器绘制带纹理的矩形（血条、图标）。
+*   **Render** 调试器： 学习使用调试器qrenderdoc捕获帧，分析 Draw Call 和资源使用情况。
 
 ---
 
@@ -127,38 +128,6 @@ MyIndieProject/
 2.  **AI:** 引入状态机，让方块自动巡逻。
 3.  **音频:** 集成 MiniAudio 播放背景音乐。
 
----
-
-## 5. 关键代码片段速查
-
-**1. 状态机接口:**
-```cpp
-class State {
-public:
-    virtual void Enter(GameObject* owner) = 0;
-    virtual void Update(GameObject* owner, float dt) = 0;
-    virtual void Exit(GameObject* owner) = 0;
-};
-```
-
-**2. 抽象网络接口:**
-```cpp
-class INetworkDriver {
-public:
-    virtual void Send(const Packet& packet) = 0;
-    virtual bool Poll(Packet& outPacket) = 0;
-};
-// 实现 LoopbackDriver (单机) 和 ENetDriver (联机)
-```
-
-**3. 材质使用:**
-```cpp
-// 客户端代码
-auto* shader = ShaderLibrary::Get("Core_PBR");
-Material* mat = new Material(shader);
-mat->SetTexture("u_Albedo", grassTexture);
-Renderer::Submit(mesh, mat, transform);
-```
 
 ---
 
@@ -234,3 +203,4 @@ Renderer::Submit(mesh, mat, transform);
     *   **Dev Mode**: 直接读取 `assets/` 文件夹。
     *   **Release Mode**: 读取加密压缩的 `.pak` 包，防止资源被盗。
 *   **构建系统**: 能够将引擎核心与游戏脚本打包成单一可执行文件。
+

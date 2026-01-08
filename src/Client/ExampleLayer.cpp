@@ -90,9 +90,13 @@ void ExampleLayer::OnUpdate(Timestep ts) {
     Renderer2D::DrawQuad({0.2f, 0.2f}, {0.2f, 0.3f}, {0.0f, 1.0f, 0.0f, 1.0f});
 
     // 压力测试：10000 个蓝色小方块
-    for(float x = -5.0f; x < 5.0f; x += 0.1f) {
-        for(float y = -5.0f; y < 5.0f; y += 0.1f) {
-             Renderer2D::DrawQuad({x, y}, {0.08f, 0.08f}, {0.0f, 0.0f, 1.0f, 0.5f});
+    // Use integer loop counters to avoid floating-point accumulation errors.
+    const int steps = 100; // (5.0 - -5.0) / 0.1 = 100
+    for (int ix = 0; ix < steps; ++ix) {
+        float x = -5.0f + ix * 0.1f;
+        for (int iy = 0; iy < steps; ++iy) {
+            float y = -5.0f + iy * 0.1f;
+            Renderer2D::DrawQuad({x, y}, {0.08f, 0.08f}, m_Texture, 1.0f, {0.0f, 0.0f, 1.0f, 0.5f});
         }
     }
 

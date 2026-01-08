@@ -32,7 +32,7 @@
 ### Additional Notes
 
 - [x] 添加LOG系统和宏定义，方便调试和日志记录。
-- [ ] Event机制，重构现有的事件处理系统，使其更灵活和易于扩展。
+- [x] Event机制，重构现有的事件处理系统，使其更灵活和易于扩展。
 - [ ] 设置Math库，统一使用GLM进行向量和矩阵运算， 向引擎用户暴露常用类型如`vec2`, `vec3`, `mat4`等，不必每次都引用glm.h.
 
 ## 🎨 阶段三：材质与资源管理 (Phase 3: Material & Resources)
@@ -132,6 +132,53 @@
 - [ ] **UI 系统**: 绘制 HUD，支持文字渲染 (`stb_truetype`).
 - [ ] **项目导出**: 简单的打包脚本，将资源和 exe 打包.
 
+# Phase 2: 架构升级与资源管理
+
+## 目标
+从“硬编码渲染”转向“数据驱动渲染”，为 ECS 和高级光照打下基础。
+
+## 1. 资源管理系统 (Asset System)
+目前我们直接创建 `Texture2D`。未来我们需要一个中心化的管理器来处理资源的加载、缓存和热重载。
+
+- [ ] **Asset Manager**: 实现 `TextureLibrary` 或 `AssetManager`。
+  - [ ] 支持通过路径加载纹理，避免重复加载同一张图。
+  - [ ] 使用 `std::string` (路径) 或 `UUID` 作为键。
+- [ ] **Shader Library**: 管理 Shader 的编译和热重载。
+
+## 2. 材质系统 (Material System) - 关键一步
+为了支持未来的光照，我们需要把“纹理”升级为“材质”。
+
+- [ ] **Material 基础类**:
+  - [ ] 属性：`AlbedoMap`, `NormalMap`, `Roughness`, `Metallic`。
+  - [ ] 统一接口：`Bind()`。
+- [ ] **Renderer 适配**:
+  - [ ] 修改 `DrawQuad` 接受 `MaterialInstance` 而非 `Texture2D`。
+  - [ ] *挑战*：Batch Rendering 如何处理不同的材质属性？(通常需要根据材质ID进行分批，或者使用 Texture Arrays 存储所有材质贴图)。
+
+## 3. ECS (Entity Component System) 基础
+引入 ECS 框架，解耦逻辑与渲染。
+
+- [ ] **引入 EnTT**: 集成 EnTT 库。
+- [ ] **Scene 类**: 创建 `Scene` 类作为 ECS 的容器。
+- [ ] **基础组件**:
+  - [ ] `TagComponent` (名字)
+  - [ ] `TransformComponent` (位置、旋转、缩放)
+  - [ ] `SpriteRendererComponent` (颜色、纹理/材质)
+- [ ] **Scene Hierarchy Panel**: (编辑器UI) 显示实体列表。
+
+## 4. 2D 渲染管线升级 (为光照做准备)
+这是通向 2D SDF GI 的前置任务。
+
+- [ ] **Framebuffer 封装**: 完善 `Framebuffer` 类，支持多渲染目标 (MRT)。
+- [ ] **G-Buffer Setup**:
+  - [ ] 创建一个包含 `ColorAttachment` (RGBA8) 和 `NormalAttachment` (RG16F) 的 Framebuffer。
+  - [ ] 修改 `Renderer2D` 将数据写入这个 Framebuffer 而不是默认屏幕。
+
+## 优先级建议
+1. **Asset System** (最简单，立刻能用)
+2. **ECS 基础** (架构核心，决定了后面代码怎么写)
+3. **材质系统 & G-Buffer** (光照核心，可以稍后，等 ECS 跑通了再把 RenderSystem 升级为 Deferred Pipeline)
+我还计划融入一些别的引擎的东西, 比如Matirel，Renderer3D，以及Spiter，tilemap等，当然还要有我们最终想得二维光追（2D SDF Global Illumination (GI) 或 Radiance Cascades）。所以我希望你以后的意见不要局限在仿照Hazel直接抄，而是建设性的给一些参考Unreal， Godot的意见，因为我们的目标还是有难度。
 ---
 
 ### 🏆 学习曲线里程碑 (Milestones)

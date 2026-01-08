@@ -35,12 +35,13 @@ OpenGLTexture2D::OpenGLTexture2D(const std::string& path) : m_Path(path) {
     stbi_uc* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     if (!data) {
-        std::cerr << "Failed to load image: " << path << std::endl;
+        std::cerr << "[PLATFORM] Failed to load image: " << path << std::endl;
         return;
     }
 
     m_Width = width;
     m_Height = height;
+    std::cout << "[PLATFORM] Loaded image: " << path << " (" << m_Width << "x" << m_Height << ", " << channels << " channels)" << std::endl;
     if (channels == 4) {
         m_InternalFormat = GL_RGBA8;
         m_DataFormat = GL_RGBA;
@@ -48,7 +49,7 @@ OpenGLTexture2D::OpenGLTexture2D(const std::string& path) : m_Path(path) {
         m_InternalFormat = GL_RGB8;
         m_DataFormat = GL_RGB;
     } else {
-        std::cerr << "Unsupported image format: " << path << std::endl;
+        std::cerr << "[PLATFORM] Unsupported image format: " << path << std::endl;
         stbi_image_free(data);
         return;
     }

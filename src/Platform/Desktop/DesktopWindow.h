@@ -6,10 +6,10 @@
 
 namespace Engine {
 
-class GlfwWindow : public Window {
+class DesktopWindow final : public Window {
   public:
-    GlfwWindow(const WindowProps& props);
-    virtual ~GlfwWindow();
+    DesktopWindow(const WindowProps& props);
+    virtual ~DesktopWindow();
 
     void OnUpdate() override;
 

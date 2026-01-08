@@ -1,20 +1,13 @@
 #pragma once
 
 #include "Engine/Renderer/Camera.h"
-#include "Engine/Renderer/Texture.h" // 引入 Texture
+#include "Engine/Renderer/Texture.h" 
 #include "Engine/Renderer/Shader.h"
-#include <glm/glm.hpp>
+#include "Engine/Core/Math.h"
 #include <memory>
 #include <vector>
 
 namespace Engine {
-
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec4 Color;
-    glm::vec2 TexCoord; // 新增：UV坐标
-    float TexIndex;     // 新增：纹理槽索引 (用 float 传给 shader)
-};
 
 struct RendererStats {
     uint32_t DrawCalls = 0;
@@ -30,13 +23,18 @@ public:
     static void EndScene();
     
     // Colored Quad
-    static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
-    static void DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color);
+    static void DrawQuad(const Vec2& position, const Vec2& size, const Vec4& color);
+    static void DrawQuad(const Vec3& position, const Vec2& size, const Vec4& color);
     
     // Textured Quad
-    static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const std::shared_ptr<Texture2D>& texture, float tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f));
-    static void DrawQuad(const glm::vec3& position, const glm::vec2& size, const std::shared_ptr<Texture2D>& texture, float tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f));
+    static void DrawQuad(const Vec2& position, const Vec2& size, const std::shared_ptr<Texture2D>& texture, float tilingFactor = 1.0f, const Vec4& tintColor = Vec4(1.0f));
+    static void DrawQuad(const Vec3& position, const Vec2& size, const std::shared_ptr<Texture2D>& texture, float tilingFactor = 1.0f, const Vec4& tintColor = Vec4(1.0f));
     
+    static void DrawRotatedQuad(const Vec2& position, const Vec2& size, float rotation, const Vec4& color);
+    static void DrawRotatedQuad(const Vec3& position, const Vec2& size, float rotation, const Vec4& color);
+    static void DrawRotatedQuad(const Vec2& position, const Vec2& size, float rotation, const std::shared_ptr<Texture2D>& texture, float tilingFactor = 1.0f, const Vec4& tintColor = Vec4(1.0f));
+    static void DrawRotatedQuad(const Vec3& position, const Vec2& size, float rotation, const std::shared_ptr<Texture2D>& texture, float tilingFactor = 1.0f, const Vec4& tintColor = Vec4(1.0f));
+
     static RendererStats& GetStats();
     static void ResetStats();
     
@@ -44,7 +42,7 @@ public:
     static void Flush();
     static void BeginBatch();
     static void EndBatch();
-    static bool IsOnScreen(const glm::vec2& pos, const glm::vec2& size);
+    static bool IsOnScreen(const Vec2& pos, const Vec2& size);
 };
 
 }

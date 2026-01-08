@@ -1,27 +1,32 @@
 #version 450 core
 
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 o_Color;
 
-// 输入必须与顶点着色器匹配
-layout(location = 0) in vec4 v_Color;
-layout(location = 1) in vec2 v_TexCoord;
+in VS_OUT {
+    vec4 Color;
+    vec2 TexCoord;
+    flat float TexIndex; // 必须匹配 vertex shader 的 flat
+    float TilingFactor;
+} fs_in;
 
-// flat 关键字必须匹配
-layout(location = 2) flat in int v_TexIndex;
-
-uniform sampler2D u_Textures[32];
+// 绑定 32 个纹理槽
+// 在 OpenGL 4.5 中，我们可以直接索引这个数组
+layout(binding = 0) uniform sampler2D u_Textures[32];
 
 void main() {
-    vec4 texColor = v_Color;
+    vec4 texColor = fs_in.Color;
+    vec2 tiledCoords = fs_in.TexCoord * fs_in.TilingFactor;
 
-    // 在 GLSL 450 中，通常可以直接使用变量索引数组
-    // 只要你的显卡驱动支持 "Dynamic Indexing" (Intel Arc 肯定支持)
-    if (v_TexIndex >= 0 && v_TexIndex < 32) {
-         texColor *= texture(u_Textures[v_TexIndex], v_TexCoord);
-    } else {
-         // 越界保护，显示洋红色调试
-         texColor = vec4(1.0, 0.0, 1.0, 1.0); 
-    }
+    // 加上 0.5 避免浮点精度问题导致的索引偏移 (例如 4.999 -> 4)
+    int index = int(fs_in.TexIndex + 0.5);
 
-    color = texColor;
+    // 动态索引采样
+    // 注意：如果 index 超出范围，行为是未定义的，但在我们的 C++ 代码里控制了最大值
+    texColor *= texture(u_Textures[index], tiledCoords);
+
+    // Alpha Cutoff
+    if (texColor.a < 0.01)
+        discard;
+
+    o_Color = texColor;
 }
